@@ -1,8 +1,8 @@
 # Loading spiketimes for entorhinal cortex recording
 
-dataDir = '/data.nst/lucas/history_dependence/Data_EC/'
-analysisDataDir = '/data.nst/lucas/history_dependence/Data_EC/dataAnalysis/'
-plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/EC/'
+dataDir = '/data.nst/lucas/history_dependence/Paper/Data_EC/'
+analysisDataDir = '/data.nst/lucas/history_dependence/Paper/Data_EC/analysis/'
+# plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/EC/'
 
 recordingNeurons = np.load(
     '{}validNeurons.npy'.format(dataDir)).astype(int)

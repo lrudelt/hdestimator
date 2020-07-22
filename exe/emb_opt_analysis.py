@@ -9,16 +9,21 @@ if sys.argv[1] == 'cluster':
 """Run parameters"""
 recording = sys.argv[2]
 # 'Neuropixel', 'Other', 'Simulated'
-area = sys.argv[3]
-# recording = 'primaryMotorCortex'  # primaryVisualCortex, rostrolateralArea, EC, Retina, In_vitro
-rec_length = sys.argv[4]
-# rec_length = '40min', '90min', 'full'
-setting = sys.argv[5]
-# 'full', 'fast'
+
 if recording == 'Simulated':
     sample_index = (int(os.environ['SGE_TASK_ID']) - 1)
+    rec_length = sys.argv[3]
+    # rec_length = '40min', '90min', 'full'
+    setting = sys.argv[4]
+    # 'full', 'fast'
 else:
     neuron_index = (int(os.environ['SGE_TASK_ID']) - 1)
+    area = sys.argv[3]
+     # primaryVisualCortex, rostrolateralArea, EC, Retina, In_vitro
+    rec_length = sys.argv[4]
+    # rec_length = '40min', '90min', 'full'
+    setting = sys.argv[5]
+    # 'full', 'fast'
 
 """Load spike data"""
 codedirectory = '/home/lucas/research/projects/history_dependence/hdestimator'
@@ -50,6 +55,6 @@ else:
 call(command, shell = True)
 
 
-# TODO: Write out load_data_scripts (idea for Simulated: choose 10 evenly spaced consecutive samples from the whole recording, but how to choose cross-validated? Only perform embedding optimization on the first half and evaluate on the full recording, or take the next recording in line)
-# TODO: Write settings files
+# TODO: Write out load_data_scripts (idea for Simulated: choose 10 evenly spaced consecutive samples from the whole recordings, but how to choose cross-validated? Only perform embedding optimization on the first half and evaluate on the full recording, or take the next recording in line)
+# TODO: Write settings files - one for each data set to adapt the analysis directory
 # TODO: Check if your function call is correct, and test on example data set with reduced setting
