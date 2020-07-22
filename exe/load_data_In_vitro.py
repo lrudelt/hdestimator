@@ -1,7 +1,11 @@
+import sys
+import numpy as np
 
-dataDir = '/data.nst/lucas/history_dependence/Data_In_vitro/'
-analysisDataDir = '/data.nst/lucas/history_dependence/Data_In_vitro/dataAnalysis/'
-plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/In_vitro/'
+dataDir = '/data.nst/lucas/history_dependence/Paper/Data_In_vitro/'
+analysisDataDir = '/data.nst/lucas/history_dependence/Paper/Data_IN_vitro/analysis/'
+# plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/In_vitro/'
+
+neuron_index = int(sys.argv[1])
 
 recordingNeurons = np.load(
     '{}validNeurons.npy'.format(dataDir)).astype(int)
@@ -11,4 +15,15 @@ sample_rate = 24038.46169
 spiketimes = np.loadtxt(
     '{}spks/spiketimes_neuron{}.dat'.format(dataDir, neuron))
 spiketimes = spiketimes / sample_rate
+
+rec_length = sys.argv[2]
+if rec_length == '40min':
+    T_rec = 2400.
+if rec_length == '90min':
+    T_rec = 5400.
+
 T_0 = (spiketimes[2] + spiketimes[1]) / 2. - 10**(-4)
+T_f = T_0 + T_rec
+
+spiketimes = spiketimes - T_0
+print(spiketimes[spiketimes < T_f])
