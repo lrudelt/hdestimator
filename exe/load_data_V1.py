@@ -28,7 +28,8 @@ if rec_length == '40min':
 if rec_length == '90min':
     T_rec = 5400.
 
-T_0 = (spiketimes[2] + spiketimes[1]) / 2. - 10**(-4)
+# Add 5 seconds to make sure that only spikes with sufficient spiking history are considered
+T_0 = spiketimes[0] + 5.
 T_f = T_0 + T_rec
 
 spiketimes = spiketimes - T_0
@@ -40,12 +41,3 @@ print(spiketimes[spiketimes < T_f])
 # VISp5 56
 # VISp6b 9
 # VISp6a 30
-
-# VISrl4 17
-# VISrl5 32
-# VISrl6a 14
-# VISrl6b 2
-
-# MOp2/3 32 31
-# MOp5 31 17
-# MOp6a 64 14
