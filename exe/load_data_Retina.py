@@ -1,8 +1,8 @@
 import sys
 import numpy as np
 
-dataDir = '/data.nst/lucas/history_dependence/Paper/Data_Retina/'
-analysisDataDir = '/data.nst/lucas/history_dependence/Paper/Data_Retina/analysis/'
+dataDir = '/data.nst/lucas/history_dependence/Paper/retina_data/'
+analysisDataDir = '/data.nst/lucas/history_dependence/Paper/retina_data/analysis/'
 # plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/EC/'
 
 neuron_index = int(sys.argv[1])

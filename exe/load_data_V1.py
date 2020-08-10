@@ -2,8 +2,8 @@
 import sys
 import numpy as np
 
-dataDir = '/data.nst/lucas/history_dependence/Paper/Data_Neuropixel/Waksman/'
-analysisDataDir = '/data.nst/lucas/history_dependence/Data_Neuropixel/Waksman/analysis/'
+dataDir = '/data.nst/lucas/history_dependence/Paper/neuropixel_data/Waksman/'
+analysisDataDir = '/data.nst/lucas/history_dependence/neuropixel_data/Waksman/analysis/'
 # plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/Neuropixel/'
 
 validNeuronsAreas = np.load('{}validNeuronsAreas.npy'.format(

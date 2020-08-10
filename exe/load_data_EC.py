@@ -3,8 +3,8 @@ import numpy as np
 from scipy.io import loadmat
 # Loading spiketimes for entorhinal cortex recording
 
-dataDir = '/data.nst/lucas/history_dependence/Paper/Data_EC/'
-analysisDataDir = '/data.nst/lucas/history_dependence/Paper/Data_EC/analysis/'
+dataDir = '/data.nst/lucas/history_dependence/Paper/EC_data/'
+analysisDataDir = '/data.nst/lucas/history_dependence/Paper/EC_data/analysis/'
 # plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/EC/'
 
 neuron_index = int(sys.argv[1])
