@@ -24,7 +24,8 @@ if rec_length == '90min':
     T_rec = 5400.
 
 T_0 = (spiketimes[2] + spiketimes[1]) / 2. - 10**(-4)
-T_f = T_0 + T_rec
 
 spiketimes = spiketimes - T_0
-print(spiketimes[spiketimes < T_f])
+spiketimes = spiketimes[spiketimes > 0]
+spiketimes = spiketimes[spiketimes < T_rec]
+print(*spiketimes, sep='\n')

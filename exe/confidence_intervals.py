@@ -45,24 +45,18 @@ program = '/home/lucas/anaconda2/envs/python3/bin/python'
 # program='/home/lucas/anaconda3/bin/python -s'
 script = '%s/estimate.py' % (codedirectory)
 
-
-"""Compute estimates for different embeddings"""
+# For the first sample, produce confidence intervals and plots
 if recorded_system == "Simulation":
-    command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t hist -p -s ' + setting_file + \
-        ' --label "{}-{}-{}"'.format(rec_length, setting, str(sample_index))
-else:
-    command = program + ' ' + load_script + ' ' + str(neuron_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t hist -p -s ' + setting_file + \
-        ' -l "{}-{}-{}"'.format(rec_length, setting, str(neuron_index))
-
-call(command, shell=True)
-#
-#
-"""Create csv results files"""
-if recorded_system == "Simulation":
-    command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
-        ' --label "{}-{}-{}"'.format(rec_length, setting, str(sample_index))
-else:
-    command = program + ' ' + load_script + ' ' + str(neuron_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
-        ' -l "{}-{}-{}"'.format(rec_length, setting, str(neuron_index))
-
-call(command, shell=True)
+    if sample_index == 0:
+        command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
+            ' --label "{}-{}-{}"'.format(rec_length,
+                                         setting, str(sample_index))
+        call(command, shell=True)
+        command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
+            ' --label "{}-{}-{}"'.format(rec_length,
+                                         setting, str(sample_index))
+        call(command, shell=True)
+        command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t plots -p -s ' + setting_file + \
+            ' --label "{}-{}-{}"'.format(rec_length,
+                                         setting, str(sample_index))
+        call(command, shell=True)

@@ -82,19 +82,76 @@ def preprocessStringerNeuropixelsData(data_path, output_path):
 # def preprocessECData(data_path, output_path):
 #     # Here, only compute the valid neurons, spikes can by directly obtained from the matlab file
 
+# data_path = "/data.nst/lucas/history_dependence/paper/EC_data/spks"
+# data = loadmat('%s/ec014.277.spike_ch.mat' % data_path)
+# sample_rate = 20000.  # in seconds
+# sptimes = data['sptimes'][0] / sample_rate
+# singleunit = data['singleunit'][0]
+# t_f = data['t_end'] / sample_rate
+# t_i = []
+# rate = []
+#
+# for i in range(85):
+#     if sptimes[i].size > 10:
+#         rate += [sptimes[i].size]
+#         t_i += [sptimes[i][9]]
+#     else:
+#         rate += [sptimes[i].size]
+#         t_i += [sptimes[i][0]]
+#
+# t_i = np.array(t_i).flatten()
+# T = t_f - t_i
+# rate = np.array(rate) / T
+#
+
+# valid_neurons = []
+# for i in range(85):
+#     if singleunit[i] == 1:
+#         print rate[0][i]
+
+# valid_neurons = []
+# for i in range(85):
+#     if singleunit[i] == 1:
+#         if rate[0][i] > 0.5:
+#             if rate[0][i] < 10:
+#                 valid_neurons += [i]
+#
+
+# Choose neuron 61 (rate 2.2 Hz) and neuron 45 (rate 1.8 Hz)
+
+# sptimes_multi = []
+# sptimes_single = []
+# neurons_multi = []
+# neurons_single = []
+# for i in range(85):
+#     if singleunit[i] == 0:
+#         sptimes_multi = np.append(sptimes_multi, sptimes[i])
+#         neurons_multi = np.append(neurons_multi, np.zeros(sptimes[i].size) + i)
+#     else:
+#         if len(sptimes[i]) / (sptimes[i][-1] - sptimes[i][0]) < 10:
+#             sptimes_single = np.append(sptimes_single, sptimes[i])
+#             neurons_single = np.append(
+#                 neurons_single, np.zeros(sptimes[i].size) + i)
+# neurons_single = neurons_single + 1
+# neurons_multi = neurons_multi + 1
+#
+# analyzed_neuron = 46  # index of neuron that is analyzed
+# spiketimes_analyzed = sptimes[analyzed_neuron - 1].flatten()
+
 # def preprocessCultureData(data_path, output_path):
 
-
+recorded_system = argv[1]
 data_path = argv[2]
 output_path = argv[3]
 
+
 if __name__ == "__main__":
-    if argv[1] == 'V1':
+    if recorded_system == 'V1':
         preprocessStringerNeuropixelsData(data_path, output_path)
-    # if argv[1] == 'Retina':
+    # if recorded_system == 'Retina':
     #     preprocessRetinaData(data_path, output_path)
-    # if argv[1] == 'EC':
+    # if recorded_system == 'EC':
     #     preprocessECData(data_path, output_path)
-    # if argv[1] == 'In_vitro':
+    # if recorded_system == 'In_vitro':
     #     preprocessCultureData(data_path, output_path)
     exit(main())

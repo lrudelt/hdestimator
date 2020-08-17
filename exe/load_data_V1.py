@@ -30,10 +30,11 @@ if rec_length == '90min':
 
 # Add 5 seconds to make sure that only spikes with sufficient spiking history are considered
 T_0 = spiketimes[0] + 5.
-T_f = T_0 + T_rec
 
 spiketimes = spiketimes - T_0
-print(spiketimes[spiketimes < T_f])
+spiketimes = spiketimes[spiketimes > 0]
+spiketimes = spiketimes[spiketimes < T_rec]
+print(*spiketimes, sep='\n')
 
 # Number of neurons per cortical layer
 # VISp2/3 14
