@@ -1,15 +1,13 @@
 import sys
 import numpy as np
 
-dataDir = '/data.nst/lucas/history_dependence/Paper/in_vitro_data/'
-analysisDataDir = '/data.nst/lucas/history_dependence/Paper/in_vitro_data/analysis/'
-# plottingDataDir = '/home/lucas/research/projects/history_dependence/data_plotting/In_vitro/'
+dataDir = '/data.nst/lucas/history_dependence/paper/culture_data/'
 
 neuron_index = int(sys.argv[1])
 
-recordingNeurons = np.load(
+validNeurons = np.load(
     '{}validNeurons.npy'.format(dataDir)).astype(int)
-neuron = recordingNeurons[neuron_index]
+neuron = validNeurons[neuron_index]
 
 sample_rate = 24038.46169
 spiketimes = np.loadtxt(
@@ -22,7 +20,8 @@ if rec_length == '40min':
 if rec_length == '90min':
     T_rec = 5400.
 
-T_0 = (spiketimes[2] + spiketimes[1]) / 2. - 10**(-4)
+# Add 5 seconds to make sure that only spikes with sufficient spiking history are considered
+T_0 = spiketimes[0] + 5.
 
 spiketimes = spiketimes - T_0
 spiketimes = spiketimes[spiketimes > 0]

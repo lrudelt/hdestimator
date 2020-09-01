@@ -15,18 +15,20 @@ DTYPE = np.uint8
 # type with a _t-suffix.
 ctypedef np.uint8_t DTYPE_t
 
+# Counts of spieks in the past bin of current spiking
 
-def counts_C(np.ndarray[np.double_t, ndim=1] spiketimes, double t_bin, double T_0, double T_f, str mode):
-    cdef int N_bins = int((T_f - T_0) / t_bin)
-    cdef np.ndarray[np.double_t, ndim = 1] sptimes = np.sort(np.append(spiketimes, [(N_bins + 1) * t_bin]))
-    cdef np.ndarray[np.int_t, ndim = 1] counts = np.zeros(N_bins, dtype=int)
+
+def counts_C(np.ndarray[np.double_t, ndim=1] spiketimes, double t_bin, double T_0, double T_f, str embedding_mode):
+    cdef int N = int((T_f - T_0) / t_bin)
+    cdef np.ndarray[np.double_t, ndim = 1] sptimes = np.sort(np.append(spiketimes, [(N + 1) * t_bin]))
+    cdef np.ndarray[np.int_t, ndim = 1] counts = np.zeros(N, dtype=int)
     cdef double t_up, t_low
     cdef int j_low, j_up
     t_up = t_bin
     j_low = 0
     j_up = 0
     t_low = 0.
-    for i in range(N_bins):
+    for i in range(N):
         while sptimes[j_low] < t_low:
             j_low += 1
         while sptimes[j_up] < t_up:
@@ -34,30 +36,29 @@ def counts_C(np.ndarray[np.double_t, ndim=1] spiketimes, double t_bin, double T_
         t_up += t_bin
         t_low += t_bin
         counts[i] += j_up - j_low
-    if mode == 'binary':
+    if embedding_mode == 'binary':
         counts[np.nonzero(counts)] = 1
     return counts
 
+# Embedding of past activity for the product with a discrete past kernel to compute the firing rate of the GLM
 
-def past_activity(np.ndarray[np.double_t, ndim=1] spiketimes, np.ndarray[np.int_t, ndim=1] indices, int d_past, int N_trials, double kappa, double tau, double t_bin, double T_0, double T_f, str mode):
-    cdef int N_bins = int((T_f - T_0) / t_bin)
-    cdef int N_spikes = len(spiketimes)
-    cdef np.ndarray[np.double_t, ndim= 1] sptimes = np.sort(np.append(spiketimes, [N_bins * t_bin]))
-    cdef np.ndarray[DTYPE_t, ndim= 1] past = np.zeros([N_trials * d_past], dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim= 1] medians = np.zeros(d_past, dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim= 1] past_temp = np.zeros(N_bins, dtype=DTYPE)
+
+def past_activity(np.ndarray[np.double_t, ndim=1] spiketimes, int d, double kappa, double tau, double t_bin, int N, str embedding_mode):
+    cdef np.ndarray[np.double_t, ndim= 1] sptimes = np.sort(np.append(spiketimes, [N * t_bin]))
+    cdef np.ndarray[DTYPE_t, ndim= 1] past = np.zeros([N * d], dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim= 1] medians = np.zeros(d, dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim= 1] past_temp = np.zeros(N, dtype=DTYPE)
     cdef double t_up, t_low, t_low_mem, s
     cdef int j, j_low, j_up, m
-    cdef double T = T_f - T_0
     t_up = 0.
-    if mode == 'medians':
+    if embedding_mode == 'medians':
         t_up = 0.
-        for k in range(d_past):
+        for k in range(d):
             j_low = 0
             j_up = 0
             t_low = t_up - tau * np.power(10, k * kappa)
             t_low_mem = t_low
-            for i in range(N_bins):
+            for i in range(N):
                 while sptimes[j_low] < t_low:
                     j_low += 1
                 while sptimes[j_up] < t_up:
@@ -66,109 +67,94 @@ def past_activity(np.ndarray[np.double_t, ndim=1] spiketimes, np.ndarray[np.int_
                 t_low += t_bin
                 past_temp[i] = j_up - j_low
             t_up = t_low_mem
-            medians[k] = np.sort(past_temp)[int(N_bins / 2.)] + 1
+            medians[k] = np.sort(past_temp)[int(N / 2.)] + 1
         t_up = 0.
-        for k in range(d_past):
+        for k in range(d):
             m = medians[k]
-            j = 0
-            index = indices[0]
             j_low = 0
             j_up = 0
             t_low = t_up - tau * np.power(10, k * kappa)
             t_low_mem = t_low
-            for i in range(N_bins):
+            for i in range(N):
                 while sptimes[j_low] < t_low:
                     j_low += 1
                 while sptimes[j_up] < t_up:
                     j_up += 1
                 t_up += t_bin
                 t_low += t_bin
-                if i == index:
-                    if j_up - j_low >= m:
-                        past[j + k * N_trials] = 1
-                    j += 1
-                    index = indices[j]
+                if j_up - j_low >= m:
+                    past[i + k * N] = 1
             t_up = t_low_mem
-    if mode == 'general':
-        for k in range(d_past):
-            j = 0
-            index = indices[0]
+    if embedding_mode == 'counts':
+        for k in range(d):
             j_low = 0
             j_up = 0
             t_low = t_up - tau * np.power(10, k * kappa)
             t_low_mem = t_low
-            for i in range(N_bins):
+            for i in range(N):
                 while sptimes[j_low] < t_low:
                     j_low += 1
                 while sptimes[j_up] < t_up:
                     j_up += 1
                 t_up += t_bin
                 t_low += t_bin
-                if i == index:
-                    if j_up - j_low > 0:
-                        past[j + k * N_trials] = j_up - j_low
-                    j += 1
-                    index = indices[j]
-            t_up = t_low_mem
-    if mode == 'binary':
-        for k in range(d_past):
-            j = 0
-            index = indices[0]
-            j_low = 0
-            j_up = 0
-            t_low = t_up - tau * np.power(10, k * kappa)
-            t_low_mem = t_low
-            for i in range(N_bins):
-                while sptimes[j_low] < t_low:
-                    j_low += 1
-                while sptimes[j_up] < t_up:
-                    j_up += 1
-                t_up += t_bin
-                t_low += t_bin
-                if i == index:
-                    if j_up - j_low > 0:
-                        past[j + k * N_trials] = 1
-                    j += 1
-                    index = indices[j]
+                if j_up - j_low > 0:
+                    past[i + k * N] = j_up - j_low
             t_up = t_low_mem
     return past
 
 
-def lograte_sum(np.ndarray[DTYPE_t, ndim=1] past, np.ndarray[np.double_t, ndim=1] kernel, int d_past, int N_trials):
-    cdef np.ndarray[np.double_t, ndim= 1] lograte = np.zeros(N_trials, dtype=np.double)
-    for k in range(d_past):
-        lograte += kernel[k] * past[k * N_trials:(k + 1) * N_trials]
+def downsample_past_activity(np.ndarray[DTYPE_t, ndim=1] past, np.ndarray[np.int_t, ndim=1] indices, int N, int d):
+    cdef int N_downsampled = len(indices)
+    cdef np.ndarray[DTYPE_t, ndim= 1] past_downsampled = np.zeros([N_downsampled * d], dtype=DTYPE)
+    for k in range(d):
+        for i, index in enumerate(indices):
+            past_downsampled[i + k *
+                             N_downsampled] = past[index + k * N]
+    return past_downsampled
+
+
+def lograte_sum(np.ndarray[DTYPE_t, ndim=1] past, np.ndarray[np.double_t, ndim=1] kernel, int d, int N):
+    cdef np.ndarray[np.double_t, ndim= 1] lograte = np.zeros(N, dtype=np.double)
+    for k in range(d):
+        lograte += kernel[k] * past[k * N:(k + 1) * N]
     return lograte
 
 
-def jac_sum(np.ndarray[DTYPE_t, ndim=1] past, np.ndarray[np.int_t, ndim=1] counts, np.ndarray[np.double_t, ndim=1] reciproke_rate, int d_past, int N_trials):
-    cdef np.ndarray[np.double_t, ndim= 1] jac = np.zeros(d_past, dtype=np.double)
-    for k in range(d_past):
-        jac[k] = np.dot(past[k * N_trials:(k + 1) * N_trials], counts) - \
-            np.dot(past[k * N_trials:(k + 1) * N_trials], reciproke_rate)
+def jac_sum(np.ndarray[DTYPE_t, ndim=1] past, np.ndarray[np.int_t, ndim=1] counts, np.ndarray[np.double_t, ndim=1] reciproke_rate, int d, int N):
+    cdef np.ndarray[np.double_t, ndim= 1] jac = np.zeros(d, dtype=np.double)
+    for k in range(d):
+        jac[k] = np.dot(past[k * N:(k + 1) * N], counts) - \
+            np.dot(past[k * N:(k + 1) * N], reciproke_rate)
     return jac
 
+# Bernoulli likelihood of the spiketrain for given past and GLM parameters h and mu
 
-def L_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d_past, int N_trials, np.ndarray[np.double_t, ndim=1] kernel, double mu):
-    cdef np.ndarray[np.double_t, ndim = 1] log_rate = lograte_sum(past, kernel, d_past, N_trials) + mu
+
+def L_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d, int N, np.ndarray[np.double_t, ndim=1] kernel, double mu):
+    cdef np.ndarray[np.double_t, ndim = 1] log_rate = lograte_sum(past, kernel, d, N) + mu
     cdef np.ndarray[np.double_t, ndim = 1] rate = np.exp(log_rate)
     cdef double L = np.dot(counts, log_rate) - np.sum(np.log(1 + rate))
     return L
 
+# Jacobian of the Bernoulli likelihood of the spiketrain for given past and GLM parameters h and mu
 
-def jac_L_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d_past, int N_trials, np.ndarray[np.double_t, ndim=1] kernel, double mu):
+
+def jac_L_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d, int N, np.ndarray[np.double_t, ndim=1] kernel, double mu):
     cdef int n_sp = np.sum(counts)
-    cdef np.ndarray[np.double_t, ndim = 1] log_rate = lograte_sum(past, kernel, d_past, N_trials) + mu
+    cdef np.ndarray[np.double_t, ndim = 1] log_rate = lograte_sum(past, kernel, d, N) + mu
     cdef np.ndarray[np.double_t, ndim = 1] rate = np.exp(log_rate)
     cdef np.ndarray[np.double_t, ndim = 1] reciproke_rate = np.multiply(np.power(1 + rate, -1), rate)
-    cdef np.ndarray[np.double_t, ndim = 1] jac_kernel = jac_sum(past, counts, reciproke_rate, d_past, N_trials)
+    cdef np.ndarray[np.double_t, ndim = 1] jac_kernel = jac_sum(past, counts, reciproke_rate, d, N)
     cdef double dmu = n_sp - np.sum(reciproke_rate)
     return np.append([dmu], jac_kernel)
 
+# Hessian of the Bernoulli likelihood of the spiketrain for given past and GLM parameters h and mu
 
-def hess_L_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d_past, int N_trials, np.ndarray[np.double_t, ndim=1] kernel, double mu):
-    cdef int dtot = d_past + 1
-    cdef np.ndarray[np.double_t, ndim = 1] log_rate = lograte_sum(past, kernel, d_past, N_trials) + mu
+
+def hess_L_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d, int N, np.ndarray[np.double_t, ndim=1] kernel, double mu):
+    cdef int dtot = d + 1
+    cdef np.ndarray[np.double_t, ndim = 1] log_rate = lograte_sum(past, kernel, d, N) + mu
     cdef np.ndarray[np.double_t, ndim = 1] rate = np.exp(log_rate)
     cdef np.ndarray[np.double_t, ndim = 1] reciproke_rate = np.multiply(np.power(1 + rate, -2), rate)
     cdef np.ndarray[np.double_t, ndim = 2] hess = np.diag(np.zeros(dtot))
@@ -176,14 +162,16 @@ def hess_L_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=
     hess[0][0] = -np.sum(reciproke_rate)
     for l in np.arange(1, dtot):
         hess[0][l] = hess[l][0] = - \
-            np.dot(past[(l - 1) * N_trials:l * N_trials], reciproke_rate)
+            np.dot(past[(l - 1) * N:l * N], reciproke_rate)
     # Compute all other elements
     for j in np.arange(1, dtot):
         for l in np.arange(j, dtot):
-            hess[j][l] = hess[l][j] = -np.dot(past[(l - 1) * N_trials:l * N_trials], np.multiply(
-                past[(j - 1) * N_trials:j * N_trials], reciproke_rate))
+            hess[j][l] = hess[l][j] = -np.dot(past[(l - 1) * N:l * N], np.multiply(
+                past[(j - 1) * N:j * N], reciproke_rate))
     return hess
 
+# Estimate of the conditional entropy based on an average of the likelihood over the data set
 
-def H_cond_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d_past, int N_trials, np.ndarray[np.double_t, ndim=1] kernel, double mu):
-    return -L_B_past(counts, past, d_past, N_trials, kernel, mu) / N_trials
+
+def H_cond_B_past(np.ndarray[np.int_t, ndim=1] counts, np.ndarray[DTYPE_t, ndim=1] past, int d, int N, double mu, np.ndarray[np.double_t, ndim=1] kernel):
+    return -L_B_past(counts, past, d, N, kernel, mu) / N

@@ -1,0 +1,5 @@
+number_of_bootstraps_nonessential : 100
+
+cross_validated_optimization : False
+
+ANALYSIS_DIR : /data.nst/lucas/history_dependence/paper/EC_data/analysis_fast_noCV
