@@ -53,9 +53,10 @@ def get_temporal_depth_Simulation(rec_length, sample_index, analysis_settings):
     # Find the temporal depth for given rec_length and sample_index
     line_index = 0
     for label in utl.load_from_CSV_file(merged_csv_file, 'label'):
+        rec_length_label = label.split("-")[0]
         sample_index_label = int(label.split("-")[2])
-        if sample_index == sample_index_label:
-            temporal_depth = float(utl.load_from_CSV_file(
+        if rec_length_label == rec_length and sample_index == sample_index_label:
+            temporal_depth_bbc = float(utl.load_from_CSV_file(
                 merged_csv_file, 'T_D_bbc')[line_index])
             temporal_depth_shuffling = float(utl.load_from_CSV_file(
                 merged_csv_file, 'T_D_shuffling')[line_index])

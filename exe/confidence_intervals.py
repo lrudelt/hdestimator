@@ -24,7 +24,7 @@ else:
     if device == 'cluster':
         neuron_index = (int(os.environ['SGE_TASK_ID']) - 1)
     else:
-        neuron_index = 0
+        neuron_index = 10
 
 
 """Load spike data"""
@@ -47,7 +47,7 @@ script = '%s/estimate.py' % (codedirectory)
 
 # For the first sample, produce confidence intervals and plots
 if recorded_system == "Simulation":
-    if sample_index == 1:
+    if sample_index == 0:
         command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
             ' --label "{}-{}-{}"'.format(rec_length,
                                          setting, str(sample_index))

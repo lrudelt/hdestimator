@@ -14,32 +14,16 @@ if device == 'cluster':
     os.environ['MKL_NUM_THREADS'] = '1'
     os.environ['NUMEXPR_NUM_THREADS'] = '1'
     os.environ['OMP_NUM_THREADS'] = '1'
-
-if recorded_system == 'Simulation':
-    if device == 'cluster':
-        sample_index = (int(os.environ['SGE_TASK_ID']) - 1)
-    else:
-        sample_index = 0
+    run_index = (int(os.environ['SGE_TASK_ID']) - 1)
 else:
-    if device == 'cluster':
-        neuron_index = (int(os.environ['SGE_TASK_ID']) - 1)
-    else:
-        neuron_index = 0
+    run_index = 0
 
-
-"""Load spike data"""
 codedirectory = '/home/lucas/research/projects/history_dependence/hdestimator'
 
-"""Load data"""
-if recorded_system == 'Simulation':
-    load_script = '{}/exe/load_data_Simulation.py'.format(codedirectory)
-    setting_file = '{}/settings/Simulation_{}.yaml'.format(
-        codedirectory, setup)
-else:
-    load_script = '{}/exe/load_data_{}.py'.format(
-        codedirectory, recorded_system)
-    setting_file = '{}/settings/{}_{}.yaml'.format(
-        codedirectory, recorded_system, setup)
+load_script = '{}/exe/load_data_{}.py'.format(
+    codedirectory, recorded_system)
+setting_file = '{}/settings/{}_{}.yaml'.format(
+    codedirectory, recorded_system, setup)
 
 program = '/home/lucas/anaconda2/envs/python3/bin/python'
 # program='/home/lucas/anaconda3/bin/python -s'
@@ -47,22 +31,29 @@ script = '%s/estimate.py' % (codedirectory)
 
 
 """Compute estimates for different embeddings"""
-if recorded_system == "Simulation":
-    command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t hist -p -s ' + setting_file + \
-        ' --label "{}-{}-{}"'.format(rec_length, setup, str(sample_index))
-else:
-    command = program + ' ' + load_script + ' ' + str(neuron_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t hist -p -s ' + setting_file + \
-        ' -l "{}-{}-{}"'.format(rec_length, setup, str(neuron_index))
+
+command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t hist -p -s ' + setting_file + \
+    ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
 
 call(command, shell=True)
-#
-#
+
+"""Compute essential confidence intervals"""
+
+command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
+    ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
+
+call(command, shell=True)
+
 """Create csv results files"""
-if recorded_system == "Simulation":
-    command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
-        ' --label "{}-{}-{}"'.format(rec_length, setup, str(sample_index))
-else:
-    command = program + ' ' + load_script + ' ' + str(neuron_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
-        ' -l "{}-{}-{}"'.format(rec_length, setup, str(neuron_index))
+
+command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
+    ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
+
+call(command, shell=True)
+
+"""Create plots"""
+
+command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t plots -p -s ' + setting_file + \
+    ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
 
 call(command, shell=True)
