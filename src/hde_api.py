@@ -14,10 +14,10 @@ def get_history_dependence(estimation_method,
                            **kwargs):
     """
     Get history dependence for binary random variable that takes
-    into account outcomes with dimension d into the past, and dim 1 
+    into account outcomes with dimension d into the past, and dim 1
     at response, based on symbol counts.
 
-    If no past_symbol_counts are provided, uses representation for 
+    If no past_symbol_counts are provided, uses representation for
     symbols as given by emb.symbol_array_to_binary to obtain them.
     """
 
@@ -51,7 +51,7 @@ def get_history_dependence(estimation_method,
 
 
 ## below are functions for estimates on spike trains
-    
+
 def get_history_dependence_for_single_embedding(spike_times,
                                                 recording_length,
                                                 estimation_method,
@@ -77,10 +77,10 @@ def get_history_dependence_for_single_embedding(spike_times,
 
         if bbc_tolerance == None:
             return history_dependence, bbc_term
-        
+
         if bbc_term >= bbc_tolerance:
             return None
-      
+
     elif estimation_method == 'shuffling':
         history_dependence = get_history_dependence(estimation_method,
                                                     symbol_counts,
@@ -90,17 +90,6 @@ def get_history_dependence_for_single_embedding(spike_times,
     return history_dependence
 
 def get_history_dependence_for_embedding_set(spike_times,
-<<<<<<< HEAD
-                                               recording_length,
-                                               estimation_method,
-                                               embedding_past_range_set,
-                                               embedding_number_of_bins_set,
-                                               embedding_scaling_exponent_set,
-                                               embedding_step_size,
-                                               bbc_tolerance=None,
-                                               dependent_var="T",
-                                               **kwargs):
-=======
                                              recording_length,
                                              estimation_method,
                                              embedding_past_range_set,
@@ -110,7 +99,6 @@ def get_history_dependence_for_embedding_set(spike_times,
                                              bbc_tolerance=None,
                                              dependent_var="T",
                                              **kwargs):
->>>>>>> upstream/master
     """
     Apply embeddings to spike_times to obtain symbol counts.
     For each T (or d), get history dependence R for the embedding for which
@@ -118,13 +106,13 @@ def get_history_dependence_for_embedding_set(spike_times,
     """
 
     assert dependent_var in ["T", "d"]
-    
+
     if bbc_tolerance == None:
         bbc_tolerance = np.inf
-        
+
     max_Rs = {}
     embeddings_that_maximise_R = {}
-    
+
     for embedding in emb.get_embeddings(embedding_past_range_set,
                                         embedding_number_of_bins_set,
                                         embedding_scaling_exponent_set):
@@ -167,18 +155,18 @@ def get_CI_for_embedding(history_dependence,
                          bootstrap_CI_percentile_hi=97.5):
     """
     Compute confidence intervals for the history dependence estimate
-    based on either the standard deviation or percentiles of 
+    based on either the standard deviation or percentiles of
     bootstrap replications of R.
     """
 
     if block_length_l == None:
-        # eg firing rate is 4 Hz, ie there is 1 spikes per 1/4 seconds, 
+        # eg firing rate is 4 Hz, ie there is 1 spikes per 1/4 seconds,
         # for every second the number of symbols is 1/ embedding_step_size
         # so we observe on average one spike every 1 / (firing_rate * embedding_step_size) symbols
         # (in the reponse, ignoring the past activity)
         firing_rate = utl.get_binned_firing_rate(spike_times, embedding_step_size)
         block_length_l = max(1, int(1 / (firing_rate * embedding_step_size)))
-    
+
     bs_history_dependence \
             = utl.get_bootstrap_history_dependence(spike_times,
                                                    embedding,
@@ -187,21 +175,8 @@ def get_CI_for_embedding(history_dependence,
                                                    number_of_bootstraps,
                                                    block_length_l)
 
-<<<<<<< HEAD
-    if bootstrap_CI_use_sd:
-        mu = np.average(bs_history_dependence)
-        sigma = np.std(bs_history_dependence)
-        CI_lo = mu - 2 * sigma
-        CI_hi = mu + 2 * sigma
-    else:
-        CI_lo = np.percentile(bs_history_dependence, bootstrap_CI_percentile_lo)
-        CI_hi = np.percentile(bs_history_dependence, bootstrap_CI_percentile_hi)
-
-    return (CI_lo, CI_hi)
-=======
     return utl.get_CI_bounds(history_dependence,
                              bs_history_dependence,
                              bootstrap_CI_use_sd=bootstrap_CI_use_sd,
                              bootstrap_CI_percentile_lo=bootstrap_CI_percentile_lo,
                              bootstrap_CI_percentile_hi=bootstrap_CI_percentile_hi)
->>>>>>> upstream/master

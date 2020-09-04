@@ -14,62 +14,33 @@ if device == 'cluster':
     os.environ['MKL_NUM_THREADS'] = '1'
     os.environ['NUMEXPR_NUM_THREADS'] = '1'
     os.environ['OMP_NUM_THREADS'] = '1'
-
-if recorded_system == 'Simulation':
-    if device == 'cluster':
-        sample_index = (int(os.environ['SGE_TASK_ID']) - 1)
-    else:
-        sample_index = 1
+    run_index = (int(os.environ['SGE_TASK_ID']) - 1)
 else:
-    if device == 'cluster':
-        neuron_index = (int(os.environ['SGE_TASK_ID']) - 1)
-    else:
-        neuron_index = 10
+    run_index = 1
 
-
-"""Load spike data"""
 codedirectory = '/home/lucas/research/projects/history_dependence/hdestimator'
 
-"""Load data"""
-if recorded_system == 'Simulation':
-    load_script = '{}/exe/load_data_Simulation.py'.format(codedirectory)
-    setting_file = '{}/settings/Simulation_{}.yaml'.format(
-        codedirectory, setting)
-else:
-    load_script = '{}/exe/load_data_{}.py'.format(
-        codedirectory, recorded_system)
-    setting_file = '{}/settings/{}_{}.yaml'.format(
-        codedirectory, recorded_system, setting)
+
+load_script = '{}/exe/load_data_{}.py'.format(
+    codedirectory, recorded_system)
+setting_file = '{}/settings/{}_{}_wCI.yaml'.format(
+    codedirectory, recorded_system, setting)
 
 program = '/home/lucas/anaconda2/envs/python3/bin/python'
 # program='/home/lucas/anaconda3/bin/python -s'
 script = '%s/estimate.py' % (codedirectory)
 
 # For the first sample, produce confidence intervals and plots
-if recorded_system == "Simulation":
-    if sample_index == 0:
-        command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
-            ' --label "{}-{}-{}"'.format(rec_length,
-                                         setting, str(sample_index))
-        call(command, shell=True)
-        command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
-            ' --label "{}-{}-{}"'.format(rec_length,
-                                         setting, str(sample_index))
-        call(command, shell=True)
-        command = program + ' ' + load_script + ' ' + str(sample_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t plots -p -s ' + setting_file + \
-            ' --label "{}-{}-{}"'.format(rec_length,
-                                         setting, str(sample_index))
-        call(command, shell=True)
-else:
-    command = program + ' ' + load_script + ' ' + str(neuron_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
-        ' --label "{}-{}-{}"'.format(rec_length,
-                                     setting, str(neuron_index))
-    call(command, shell=True)
-    command = program + ' ' + load_script + ' ' + str(neuron_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
-        ' --label "{}-{}-{}"'.format(rec_length,
-                                     setting, str(neuron_index))
-    call(command, shell=True)
-    command = program + ' ' + load_script + ' ' + str(neuron_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t plots -p -s ' + setting_file + \
-        ' --label "{}-{}-{}"'.format(rec_length,
-                                     setting, str(neuron_index))
-    call(command, shell=True)
+# TODO:
+command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
+    ' --label "{}-{}-{}"'.format(rec_length,
+                                 setting, str(run_index))
+call(command, shell=True)
+command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
+    ' --label "{}-{}-{}"'.format(rec_length,
+                                 setting, str(run_index))
+call(command, shell=True)
+command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t plots -p -s ' + setting_file + \
+    ' --label "{}-{}-{}"'.format(rec_length,
+                                 setting, str(run_index))
+call(command, shell=True)
