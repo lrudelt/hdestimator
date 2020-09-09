@@ -101,13 +101,13 @@ def get_beta_MAP(mk, K, N):
 
     Provides the location of the peak, around which we integrate.
 
-    beta_MAP is the value for beta for which the posterior of the 
-    NSB estimator is maximised (or, equivalently, of the logarithm 
+    beta_MAP is the value for beta for which the posterior of the
+    NSB estimator is maximised (or, equivalently, of the logarithm
     thereof, as computed here).
     """
-    
+
     K1 = K - mk[0]
-    
+
     if d_log_rho(10**1, mk, K, N) > 0:
         print("Warning: No ML parameter was found.", file=stderr, flush=True)
         beta_MAP = np.float('nan')
@@ -125,7 +125,7 @@ def get_beta_MAP(mk, K, N):
 
 def alpha_ML(mk, K1, N):
     """
-    Compute first guess for the beta_MAP (cf get_beta_MAP) parameter 
+    Compute first guess for the beta_MAP (cf get_beta_MAP) parameter
     via the posterior of a Dirichlet process.
     """
 
@@ -161,12 +161,12 @@ def get_integration_bounds(mk, K, N):
                      np.float(beta_MAP + 8 * std)]
 
     return intbounds
-        
+
 def H1(beta, mk, K, N):
     """
     Compute the first moment (expectation value) of the entropy H.
 
-    H is the entropy one obtains with a symmetric Dirichlet prior 
+    H is the entropy one obtains with a symmetric Dirichlet prior
     with concentration parameter beta and a multinomial likelihood.
     """
 
@@ -174,7 +174,7 @@ def H1(beta, mk, K, N):
     return mp.psi(0, norm + 1) - np.sum((mk[n] * (n + beta) *
                                          mp.psi(0, n + beta + 1) for n in mk)) / norm
 
-        
+
 def nsb_entropy(mk, K, N):
     """
     Estimate the entropy of a system using the NSB estimator.
@@ -197,7 +197,7 @@ def nsb_entropy(mk, K, N):
         # instead of from 1 to infinity
 
         integration_bounds = [0, 1]
-        
+
         def unnormalized_posterior_w(w, mk, K, N):
             sbeta = w / (1 - w)
             beta = sbeta * sbeta
@@ -250,20 +250,20 @@ def get_multiplicities(symbol_counts, alphabet_size):
 
     mk = dict(((value, 0) for value in symbol_counts.values()))
     number_of_observed_symbols = np.count_nonzero([value for value in symbol_counts.values()])
-        
+
     for symbol in symbol_counts.keys():
         mk[symbol_counts[symbol]] += 1
 
     # the number of symbols that have not been observed in the data
-    mk[0] = alphabet_size - number_of_observed_symbols 
-    
+    mk[0] = alphabet_size - number_of_observed_symbols
+
     return mk
 
 
 def bayesian_bias_criterion(H_nsb, H_plugin, H_uncond, bbc_tolerance):
     """
     Get whether the Bayesian bias criterion (bbc) is passed.
-    
+
     :param H_NSB: NSB entropy
     :param H_plugin: Plugin entropy
     :param H_uncond: (Unconditional) entropy of the spike train, aka H_spiking
@@ -280,17 +280,17 @@ def get_bbc_term(H_nsb, H_plugin, H_uncond):
     """
     Get the bbc-tolerance-independent term of the Bayesian bias
     criterion (bbc).
-    
+
     :param H_NSB: NSB entropy
     :param H_plugin: Plugin entropy
     :param H_uncond: (Unconditional) entropy of the spike train, aka H_spiking
     """
-    
+
     if H_uncond > 0:
         return np.abs(H_nsb - H_plugin) / H_uncond
     else:
         return np.inf
-    
+
 def bbc_estimator(symbol_counts,
                   past_symbol_counts,
                   alphabet_size,
@@ -308,15 +308,19 @@ def bbc_estimator(symbol_counts,
                                  alphabet_size_past)
 
     N = sum((mk[n] * n for n in mk.keys()))
-                                        
+
     H_nsb_joint = nsb_entropy(mk, alphabet_size, N)
     H_nsb_past = nsb_entropy(mk_past, alphabet_size_past, N)
 
     H_nsb_cond = H_nsb_joint - H_nsb_past
     I_nsb = H_uncond - H_nsb_cond
     history_dependence = I_nsb / H_uncond
-    
+
     H_plugin_joint = plugin_entropy(mk, N)
+    H_plugin_past = plugin_entropy(mk_past, N)
+    H_plugin_cond = H_plugin_joint - H_plugin_past
+    I_plugin = H_uncond - H_plugin_cond
+    history_dependence_plugin = I_plugin / H_uncond
 
     if return_ais:
         ret_val = np.float(I_nsb)
@@ -324,11 +328,11 @@ def bbc_estimator(symbol_counts,
         ret_val = np.float(history_dependence)
 
     if not bbc_tolerance == None:
-        if bayesian_bias_criterion(H_nsb_joint, H_plugin_joint, H_uncond, bbc_tolerance):
+        if bayesian_bias_criterion(I_nsb, I_plugin, I_nsb, bbc_tolerance):
             return ret_val
         else:
             return None
     else:
-        return ret_val, np.float(get_bbc_term(H_nsb_joint,
-                                              H_plugin_joint,
-                                              H_uncond))
+        return ret_val, np.float(get_bbc_term(I_nsb,
+                                              I_plugin,
+                                              I_nsb))

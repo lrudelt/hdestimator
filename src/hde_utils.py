@@ -233,7 +233,7 @@ def get_embeddings_that_maximise_R(f,
                                                        embedding=embedding,
                                                        estimation_method=estimation_method,
                                                        cross_val=cross_val)
-                    if bbc_term >= bbc_tolerance * history_dependence:
+                    if bbc_term >= bbc_tolerance:
                         continue
 
                 if dependent_var == "T":

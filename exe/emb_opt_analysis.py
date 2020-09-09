@@ -16,7 +16,7 @@ if device == 'cluster':
     os.environ['OMP_NUM_THREADS'] = '1'
     run_index = (int(os.environ['SGE_TASK_ID']) - 1)
 else:
-    run_index = 0
+    run_index = 96
 
 codedirectory = '/home/lucas/research/projects/history_dependence/hdestimator'
 
