@@ -21,12 +21,10 @@ EXIT_FAILURE = 1
 """Run parameters"""
 device = argv[1]
 recorded_system = argv[2]
-# recorded_system = 'Simulation'
 rec_length = argv[3]
 # rec_length = '90min'
 setup = argv[4]
-# setup = 'full_noCV'
-# 'full_noCV', 'full',
+# 'full_withCV', 'full',
 
 if device == 'cluster':
     os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -58,20 +56,19 @@ def main():
     # Load embedding parameters
     embedding_parameters_bbc, embedding_parameters_shuffling, analysis_num_str = glm.load_embedding_parameters(
         rec_length, sample_index, analysis_settings)
-
-    temporal_depth_bbc, temporal_depth_shuffling, analysis_num_str = glm.get_temporal_depth_Simulation(
+    temporal_depth_bbc, temporal_depth_shuffling, analysis_num_str = glm.get_temporal_depth(
         rec_length, sample_index, analysis_settings)
-    # Only compute for optimized embedding parameters for temporal depth
-    embedding_parameters_bbc = embedding_parameters_bbc[:,
-                                                        embedding_parameters_bbc[0] == temporal_depth_bbc]
-    embedding_parameters_shuffling = embedding_parameters_shuffling[:,
-                                                                    embedding_parameters_shuffling[0] == temporal_depth_shuffling]
+    # Compute glm for optimized embedding parameters for temporal depth, only if sample_index = 0 compute for all T
+    if sample_index > 0:
+        embedding_parameters_bbc = embedding_parameters_bbc[:,
+                                                            embedding_parameters_bbc[0] == temporal_depth_bbc]
+        embedding_parameters_shuffling = embedding_parameters_shuffling[:,
+                                                                        embedding_parameters_shuffling[0] == temporal_depth_shuffling]
     # Compute history dependence with GLM for the same embeddings as found with bbc/shuffling
     glm_benchmark_bbc = glm.compute_benchmark_R(embedding_parameters_bbc,
                                                 spiketimes, counts, glm_settings, regularization_method='bbc')
     glm_benchmark_shuffling = glm.compute_benchmark_R(embedding_parameters_shuffling,
                                                       spiketimes, counts, glm_settings, regularization_method='shuffling')
-    print(analysis_num_str, glm_benchmark_bbc, glm_benchmark_shuffling)
     # Save results to glm_benchmarks.csv
     glm.save_glm_benchmark_to_CSV(glm_benchmark_bbc, embedding_parameters_bbc,
                                   analysis_settings, analysis_num_str, regularization_method='bbc')

@@ -78,21 +78,29 @@ def main_Experiments():
     # Load settings
     with open('{}/settings/{}_glm.yaml'.format(ESTIMATOR_DIR, recorded_system), 'r') as glm_settings_file:
         glm_settings = yaml.load(glm_settings_file, Loader=yaml.BaseLoader)
+    with open('{}/settings/{}_full.yaml'.format(ESTIMATOR_DIR, recorded_system), 'r') as analysis_settings_file:
+        analysis_settings = yaml.load(
+            analysis_settings_file, Loader=yaml.BaseLoader)
     # Load and preprocess spiketimes and compute binary counts for current spiking
     spiketimes, counts = glm.load_and_preprocess_spiketimes_experiments(
         recorded_system, neuron_index, glm_settings)
 
     # Get the past range for which R should be estimated
-    temporal_depth, analysis_num_str = glm.get_temporal_depth(
+    temporal_depth_bbc, temporal_depth_shuffling, analysis_num_str = glm.get_temporal_depth(
         rec_length, neuron_index, glm_settings)
+
+    embedding_parameters_bbc, embedding_parameters_shuffling, analysis_num_str = glm.load_embedding_parameters(
+        rec_length, neuron_index, analysis_settings)
+    embedding_parameters_bbc = embedding_parameters_bbc[:,
+                                                        embedding_parameters_bbc[0] == temporal_depth_bbc]
 
     # Compute optimized estimate of R for given past range
     glm_estimates, BIC = glm.compute_estimates_R_BIC(
-        temporal_depth, spiketimes, counts, glm_settings)
+        temporal_depth_bbc, embedding_parameters_bbc, spiketimes, counts, glm_settings)
 
     # Save results to glm_benchmarks.csv
     glm.save_glm_estimates_R_to_CSV_Experiments(
-        temporal_depth, glm_estimates, BIC, glm_settings, analysis_num_str)
+        temporal_depth_bbc, embedding_parameters_bbc, glm_estimates, BIC, glm_settings, analysis_num_str)
 
     return EXIT_SUCCESS
 

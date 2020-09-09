@@ -24,6 +24,7 @@ path.insert(1, '{}/src'.format(ESTIMATOR_DIR))
 if 'hde_glm' not in modules:
     import hde_glm as glm
     import hde_utils as utl
+    import hde_plotutils as plots
 
 # fig = dirname(realpath(__file__)).split("/")[-1]
 fig = 'supplementaries'
@@ -34,7 +35,7 @@ rec_lengths = ['1min', '3min', '5min', '10min', '20min', '45min', '90min']
 rec_length_values = [60., 180., 300., 600., 1200., 2700., 5400.]
 rec_lengths_colors_bbc = [sns.color_palette("RdBu_r", 15)[8], sns.color_palette("RdBu_r", 15)[9], sns.color_palette("RdBu_r", 15)[10], sns.color_palette(
     "RdBu_r", 15)[11], sns.color_palette("RdBu_r", 15)[12], sns.color_palette("RdBu_r", 15)[13], sns.color_palette("RdBu_r", 15)[14]]
-setups = ['full_noCV', 'full']
+setups = ['full', 'full_withCV']
 # Only plot first sample
 
 """Plotting"""
@@ -61,26 +62,6 @@ rec_length_colors = {'bbc-1min': sns.color_palette("RdBu_r", 16)[9],
                      'shuffling-20min': sns.color_palette("RdBu_r", 16)[2],
                      'shuffling-45min': sns.color_palette("RdBu_r", 16)[1],
                      'shuffling-90min': sns.color_palette("RdBu_r", 16)[0]}
-
-
-def get_CI_median(samples):
-    N_samples = len(samples)
-    median = np.median(samples)
-    median_samples = np.sort(np.median(np.random.choice(
-        samples, size=(10000, N_samples)), axis=1))
-    CI_lo = median_samples[249]
-    CI_hi = median_samples[9749]
-    return CI_lo, CI_hi
-
-
-def get_CI_mean(samples):
-    N_samples = len(samples)
-    mean = np.mean(samples)
-    mean_samples = np.sort(np.mean(np.random.choice(
-        samples, size=(10000, N_samples)), axis=1))
-    CI_lo = mean_samples[249]
-    CI_hi = mean_samples[9749]
-    return CI_lo, CI_hi
 
 
 """Load data for all plots"""
@@ -180,43 +161,43 @@ for setup in setups:
         # median_rel_bias_lowT['bbc-{}-{}'.format(setup, rec_length)
         #                      ] = np.median(rel_bias_bbc_lowT)
         # median_CI_rel_bias_lowT['bbc-{}-{}'.format(setup, rec_length)
-        #                         ] = get_CI_median(rel_bias_bbc_lowT)
+        #                         ] = plots.get_CI_median(rel_bias_bbc_lowT)
         # median_rel_bias_lowT['shuffling-{}-{}'.format(setup, rec_length)
         #                      ] = np.median(rel_bias_shuffling_lowT)
         # median_CI_rel_bias_lowT['shuffling-{}-{}'.format(setup, rec_length)
-        #                         ] = get_CI_median(rel_bias_shuffling_lowT)
+        #                         ] = plots.get_CI_median(rel_bias_shuffling_lowT)
         # median_rel_bias_mediumT['bbc-{}-{}'.format(setup, rec_length)
         #                         ] = np.median(rel_bias_bbc_mediumT)
         # median_CI_rel_bias_mediumT['bbc-{}-{}'.format(setup, rec_length)
-        #                            ] = get_CI_median(rel_bias_bbc_mediumT)
+        #                            ] = plots.get_CI_median(rel_bias_bbc_mediumT)
         # median_rel_bias_mediumT['shuffling-{}-{}'.format(setup, rec_length)
         #                         ] = np.median(rel_bias_shuffling_mediumT)
         # median_CI_rel_bias_mediumT['shuffling-{}-{}'.format(setup, rec_length)
-        #                            ] = get_CI_median(rel_bias_shuffling_mediumT)
+        #                            ] = plots.get_CI_median(rel_bias_shuffling_mediumT)
         # median_rel_bias_highT['bbc-{}-{}'.format(setup, rec_length)
         #                       ] = np.median(rel_bias_bbc_highT)
         # median_CI_rel_bias_highT['bbc-{}-{}'.format(setup, rec_length)
-        #                          ] = get_CI_median(rel_bias_bbc_highT)
+        #                          ] = plots.get_CI_median(rel_bias_bbc_highT)
         # median_rel_bias_highT['shuffling-{}-{}'.format(setup, rec_length)
         #                       ] = np.median(rel_bias_shuffling_highT)
         # median_CI_rel_bias_highT['shuffling-{}-{}'.format(setup, rec_length)
-        #                          ] = get_CI_median(rel_bias_shuffling_highT)
+        #                          ] = plots.get_CI_median(rel_bias_shuffling_highT)
         median_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
                             ] = np.median(rel_bias_bbc_T_D)
         median_CI_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
-                               ] = get_CI_median(rel_bias_bbc_T_D)
+                               ] = plots.get_CI_median(rel_bias_bbc_T_D)
         median_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
                             ] = np.median(rel_bias_shuffling_T_D)
         median_CI_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
-                               ] = get_CI_median(rel_bias_shuffling_T_D)
+                               ] = plots.get_CI_median(rel_bias_shuffling_T_D)
         mean_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
                           ] = np.mean(rel_bias_bbc_T_D)
         mean_CI_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
-                             ] = get_CI_mean(rel_bias_bbc_T_D)
+                             ] = plots.get_CI_mean(rel_bias_bbc_T_D)
         mean_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
                           ] = np.mean(rel_bias_shuffling_T_D)
         mean_CI_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
-                             ] = get_CI_mean(rel_bias_shuffling_T_D)
+                             ] = plots.get_CI_mean(rel_bias_shuffling_T_D)
 
         # mean_rel_bias['shuffling-{}-{}'.format(setup, rec_length)] = np.median(
         #     rel_bias_shuffling)
@@ -270,13 +251,13 @@ for j, setup in enumerate(setups):
         ax.spines['top'].set_bounds(0, 0)
         ax.spines['right'].set_bounds(0, 0)
         # only plot labels and legend for left-hand side
-        if setup == 'full_noCV':
+        if setup == 'full':
             # ax.set_xlabel(r'past range $T$ [sec]')
-            ax.set_ylabel(r'relative bias for $R(\hat{T}_D)$')
+            ax.set_ylabel(r'relative bias for $R(\hat{T}_D)$ [\%]')
         if regularization == 'shuffling':
-            ax.set_xlabel(r'recording time $T_{\mathrm{rec}}$ (min)')
+            ax.set_xlabel(r'recording time $T_{\mathrm{rec}}$ [min]')
 
-        if setup == 'full_noCV':
+        if setup == 'full':
             ax.set_title(
                 '{}, embedding-optimized estimate'.format(regularization))
         else:
@@ -317,15 +298,15 @@ for j, setup in enumerate(setups):
             #                 facecolor=rec_length_colors['{}-{}'.format(
             #                     regularization, rec_length)],
             #                 alpha=0.4)
-        if setup == 'full_noCV':
+        if setup == 'full':
             ax.legend(loc=(.6, .3), frameon=False)
     # sns.palplot(sns.color_palette("RdBu_r", 15))  #visualize the color palette
     # ax.set_color_cycle(sns.color_palette("coolwarm_r",num_lines)) setting it
     # as color cycle to do automatised color assignment
 
-    ##########################################
-    ########## Simulated Conventional ########
-    ##########################################
+##########################################
+########## Simulated Conventional ########
+##########################################
 
 # ax.text(0.012, M_max + 0.02 * M_max, r'$\hat{R}_{tot}$')
 # ax.text(T_D_shuffling + 0.15 * Tm_eff, .101, r'$\hat{T}_D$')

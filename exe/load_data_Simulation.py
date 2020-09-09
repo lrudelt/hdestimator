@@ -12,13 +12,13 @@ rec_lengths = {'1min': 60., '3min': 180., '5min': 300.,
                '10min': 600., '20min': 1200., '45min': 2700., '90min': 5400.}
 
 T_rec = rec_lengths[rec_length]
-# Shift by 90 minutes to obtain 10 representative samples with different statstics
-# T_0 = 100. - 10**(-4) + 5400. * sample_index
-
-# Shift by 30 minutes to obtain another 20 samples with different statistics, at least for recording lengths <= 20min.
-sample_index = sample_index - 10
-T_0 = 100. - 10**(-4) + sample_index * 1800. + \
-    (int(sample_index / 2) + 1) * 1800.
+# When recording longer than 30 minutes, Shift by 90 minutes to obtain 10 representative samples with different statstics. Otherwise, shift by 30minutes to obtain 30 samples.
+if T_rec > 1800.:
+    T_0 = 100. - 10**(-4) + sample_index * 5400. 
+else:
+    T_0 = 100. - 10**(-4) + sample_index * 1800.
+    # T_0 = 100. - 10**(-4) + sample_index * 1800. + \
+    #     (int(sample_index / 2) + 1) * 1800.
 
 spiketimes = np.loadtxt('{}spiketimes_constI_5ms.dat'.format(dataDir))
 spiketimes = spiketimes - T_0

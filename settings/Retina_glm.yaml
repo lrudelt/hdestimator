@@ -10,4 +10,4 @@ total_recording_length : 5400.
 # For optimization work with binary median embedding because it showed higher performance
 embedding_mode_optimization : 'medians'
 
-ANALYSIS_DIR : /data.nst/lucas/history_dependence/paper/retina_data//analysis_full_noCV
+ANALYSIS_DIR : /data.nst/lucas/history_dependence/paper/retina_data//analysis_full

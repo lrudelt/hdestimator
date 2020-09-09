@@ -78,7 +78,7 @@ def get_history_dependence_for_single_embedding(spike_times,
         if bbc_tolerance == None:
             return history_dependence, bbc_term
 
-        if bbc_term >= bbc_tolerance:
+        if bbc_term >= bbc_tolerance * history_dependence:
             return None
 
     elif estimation_method == 'shuffling':

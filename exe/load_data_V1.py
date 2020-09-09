@@ -11,12 +11,13 @@ validNeuronsAreas = np.load('{}validNeuronsAreas.npy'.format(
 areaLayers = {'primaryVisualCortex': ['VISp23', 'VISp4', 'VISp5', 'VISp6b', 'VISp6a'], 'rostrolateralArea': [
     'VISrl4', 'VISrl5', 'VISrl6b', 'VISrl6a'], 'primaryMotorCortex': ['MOp5', 'MOp6a', 'MOp23']}
 
+
 area = 'primaryVisualCortex'
 validNeurons = []
 for layer in areaLayers[area]:
     for neuron in validNeuronsAreas[layer]:
         validNeurons += [neuron]
-
+        
 neuron_index = int(sys.argv[1])
 neuron = validNeurons[neuron_index]
 spiketimes = np.load('{}spks/spikes-{}-{}.npy'.format(dataDir,

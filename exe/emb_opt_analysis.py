@@ -40,11 +40,11 @@ print("hist done")
 
 """Compute essential confidence intervals"""
 
-command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
-    ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
-
-call(command, shell=True)
-print("conf done")
+# command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
+#     ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
+#
+# call(command, shell=True)
+# print("conf done")
 """Create csv results files"""
 
 command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \

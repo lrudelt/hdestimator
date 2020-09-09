@@ -21,31 +21,7 @@ __version__ = "unknown"
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 
-
-def get_temporal_depth(rec_length, neuron_index, glm_settings):
-    analysis_dir = glm_settings['ANALYSIS_DIR']
-    merged_csv_file_name = '{}/statistics_merged.csv'.format(
-        analysis_dir)
-    merged_csv_file = open(merged_csv_file_name, 'r')
-    # Find the temporal depth for given rec_length and neuron_index
-    line_index = 0
-    for label in utl.load_from_CSV_file(merged_csv_file, 'label'):
-        neuron_index_label = int(label.split("-")[2])
-        if neuron_index == neuron_index_label:
-            temporal_depth_bbc = float(utl.load_from_CSV_file(
-                merged_csv_file, 'T_D_bbc')[line_index])
-            analysis_num = int(utl.load_from_CSV_file(
-                merged_csv_file, 'analysis_num')[line_index])
-            break
-        line_index += 1
-    merged_csv_file.close()
-    analysis_num_str = str(analysis_num)
-    for i in range(4 - len(str(analysis_num))):
-        analysis_num_str = '0' + analysis_num_str
-    return temporal_depth_bbc, temporal_depth_shuffling, analysis_num_str
-
-
-def get_temporal_depth_Simulation(rec_length, sample_index, analysis_settings):
+def get_temporal_depth(rec_length, run_index, analysis_settings):
     analysis_dir = analysis_settings['ANALYSIS_DIR']
     merged_csv_file_name = '{}/statistics_merged.csv'.format(
         analysis_dir)
@@ -54,8 +30,8 @@ def get_temporal_depth_Simulation(rec_length, sample_index, analysis_settings):
     line_index = 0
     for label in utl.load_from_CSV_file(merged_csv_file, 'label'):
         rec_length_label = label.split("-")[0]
-        sample_index_label = int(label.split("-")[2])
-        if rec_length_label == rec_length and sample_index == sample_index_label:
+        run_index_label = int(label.split("-")[2])
+        if rec_length_label == rec_length and run_index == run_index_label:
             temporal_depth_bbc = float(utl.load_from_CSV_file(
                 merged_csv_file, 'T_D_bbc')[line_index])
             temporal_depth_shuffling = float(utl.load_from_CSV_file(
@@ -213,7 +189,7 @@ def save_glm_estimates_R_to_CSV_Simulation(past_range, glm_estimates, glm_estima
     return EXIT_SUCCESS
 
 
-def save_glm_estimates_R_to_CSV_Experiments(past_range, glm_estimates, BIC, glm_settings, analysis_num_str):
+def save_glm_estimates_R_to_CSV_Experiments(past_range, opt_embedding_parameters, glm_estimates, BIC, glm_settings, analysis_num_str):
     analysis_dir = glm_settings['ANALYSIS_DIR']
     analysis_dir = analysis_dir + '/ANALYSIS' + analysis_num_str
     glm_csv_file_name = '{}/glm_estimates_BIC.csv'.format(
@@ -222,13 +198,18 @@ def save_glm_estimates_R_to_CSV_Experiments(past_range, glm_estimates, BIC, glm_
         writer = csv.DictWriter(glm_csv_file, fieldnames=[
                                 "T", "number_of_bins_d", "scaling_kappa", "first_bin_size", "BIC", "R_GLM"])
         writer.writeheader()
+        d = int(opt_embedding_parameters[1][0])
+        kappa = opt_embedding_parameters[2][0]
+        tau = opt_embedding_parameters[3][0]
+        writer.writerow(
+            {"T": past_range, "number_of_bins_d": d, "scaling_kappa": kappa, "first_bin_size": tau, "BIC": BIC[0], "R_GLM": glm_estimates[0]})
         for i, d in enumerate(glm_settings['embedding_number_of_bins_set']):
             d = int(d)
             max_first_bin_size = float(glm_settings['max_first_bin_size'])
             kappa, tau = get_embeddings_for_optimization(
                 past_range, d, max_first_bin_size)
             writer.writerow(
-                {"T": past_range, "number_of_bins_d": d, "scaling_kappa": kappa, "first_bin_size": tau, "BIC": BIC[i], "R_GLM": glm_estimates[i]})
+                {"T": past_range, "number_of_bins_d": d, "scaling_kappa": kappa, "first_bin_size": tau, "BIC": BIC[i+1], "R_GLM": glm_estimates[i+1]})
     return EXIT_SUCCESS
 
 
@@ -386,7 +367,7 @@ def compute_estimates_R_cross_validation(past_range, spiketimes, counts_total, g
 # Compute estimates of R and the Bayesian information criterion (BIC) for given past range and a set of embedding dimensions d
 
 
-def compute_estimates_R_BIC(past_range, spiketimes, counts, glm_settings):
+def compute_estimates_R_BIC(past_range, opt_embedding_parameters, spiketimes, counts, glm_settings):
     # Load embedding parameters for optimization
     t_bin = float(glm_settings['embedding_step_size'])
     embedding_mode = glm_settings['embedding_mode_optimization']
@@ -395,8 +376,19 @@ def compute_estimates_R_BIC(past_range, spiketimes, counts, glm_settings):
     max_first_bin_size = float(glm_settings['max_first_bin_size'])
     # Number of total data points
     N = len(counts)
-    R_GLM = []
-    BIC = []
+    # Fit GLM for optimal embedding parameters
+    d = int(opt_embedding_parameters[1][0])
+    kappa = opt_embedding_parameters[2][0]
+    tau = opt_embedding_parameters[3][0]
+    # apply past embedding
+    past = past_activity(spiketimes, d, kappa, tau,
+                         t_bin, N, embedding_mode)
+    # fit GLM parameters
+    mu, h = fit_GLM_params(
+        counts, past, d, N)
+    # estimate history dependence for fitted GLM parameters
+    R_GLM = [compute_R_GLM(counts, past, d, N, mu, h)]
+    BIC = [compute_BIC_GLM(counts, past, d, N, mu, h)]
     for d in embedding_number_of_bins_set:
         # get remaining embedding parameters such that the embedding has a certain minimum resolution (set by max_first_bin_size)
         kappa, tau = get_embeddings_for_optimization(

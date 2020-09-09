@@ -32,7 +32,7 @@ if 'hde_glm' not in modules:
 
 sample_index = 0
 rec_length = '90min'
-setup = 'full_noCV'
+setup = 'full'
 
 """Settings"""
 # Load settings from yaml file
@@ -148,10 +148,10 @@ ax.plot([T[0], T[-1]], [R_max, R_max], '--', color='0.5', zorder=1)
 ax.plot(T_old, R_GLM_BIC, color='.5', zorder=3)
 
 # GLM for same embeddings as comparison
-ax.plot(T, R_glm_bbc, '-.', color='.4', alpha=0.8,
-        zorder=3, label='true $R(T)$ (BBC)')  # , label='Model'
-ax.plot(T, R_glm_shuffling, ':', color='.4',
-        lw=1.8, alpha=0.8, zorder=2, label=r'true $R(T)$ (Shuffling)')
+# ax.plot(T, R_glm_bbc, '-.', color='.4', alpha=0.8,
+#         zorder=3, label='true $R(T)$ (BBC)')  # , label='Model'
+# ax.plot(T, R_glm_shuffling, ':', color='.4',
+#         lw=1.8, alpha=0.8, zorder=2, label=r'true $R(T)$ (Shuffling)')
 
 # Embedding optimized estimates and confidence intervals
 ax.plot(T, R_bbc, linewidth=1.2,  color=main_red, zorder=4)
@@ -194,8 +194,8 @@ ax.legend(loc=(.05, .83), frameon=False)
 
 fig.tight_layout(pad=1.0, w_pad=1.0, h_pad=1.0)
 # fig.savefig("Subsampling_fixed_Cat.pdf")
-plt.savefig('{}/Ropt_vs_T_comparison.pdf'.format(PLOTTING_DIR),
-            format="pdf", bbox_inches='tight')
+# plt.savefig('{}/Ropt_vs_T_comparison.pdf'.format(PLOTTING_DIR),
+#             format="pdf", bbox_inches='tight')
 # plt.savefig('../Mopt_vs_Tm_model_comparison.png',
 #             format="png", dpi=300, bbox_inches='tight')
 plt.show()
