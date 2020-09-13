@@ -19,6 +19,11 @@ if 'hde_glm' not in modules:
     import hde_utils as utl
     import hde_plotutils as plots
 
+# fig = dirname(realpath(__file__)).split("/")[-1]
+fig = 'fig3'
+PLOTTING_DIR = '/home/lucas/research/papers/history_dependence/arXiv/figs/{}'.format(
+    fig)
+
 """Load data"""
 recorded_system = 'EC'
 rec_length = '90min'
@@ -29,23 +34,33 @@ R_tot_fivebins_EC = []
 R_tot_onebin_EC = []
 R_tot_glm_EC = []
 for neuron_index in range(number_valid_neurons):
-    setup = 'full'
-    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, R_tot_shuffling, T_D_shuffling, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results_full(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    setup = 'full_bbc'
+    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
+    R_tot_bbc, T_D_index_bbc, max_valid_index_bbc = plots.get_R_tot(T, R_bbc, R_bbc_CI_lo)
+
+    # Load GLM R_tot
+    R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
+    R_tot_glm_EC += [R_tot_glm/R_tot_bbc]
+
+    setup = 'full_shuffling'
+    R_tot_shuffling, T_D_shuffling, T, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+    R_tot_shuffling, T_D_index_shuffling, max_valid_index_shuffling = plots.get_R_tot(T, R_shuffling, R_shuffling_CI_lo)
     R_tot_shuffling_EC += [R_tot_shuffling/R_tot_bbc]
 
     setup = 'fivebins'
-    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR,regularization_method = 'shuffling')
+    R_tot_fivebins, T_D_index_fivebins, max_valid_index_fivebins = plots.get_R_tot(T, R_fivebins, R_fivebins_CI_lo)
     R_tot_fivebins_EC += [R_tot_fivebins/R_tot_bbc]
 
     setup = 'onebin'
-    R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR,regularization_method = 'shuffling')
+    R_tot_onebin, T_D_index_onebin, max_valid_index_onebin = plots.get_R_tot(T, R_onebin, R_onebin_CI_lo)
     R_tot_onebin_EC += [R_tot_onebin/R_tot_bbc]
 
-    R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
-    R_tot_glm_EC += [R_tot_glm/R_tot_bbc]
 
 R_tot_shuffling_EC_median = np.median(R_tot_shuffling_EC)
 R_tot_shuffling_EC_median_loCI, R_tot_shuffling_EC_median_hiCI = plots.get_CI_median(R_tot_shuffling_EC)
@@ -65,23 +80,32 @@ R_tot_fivebins_Retina = []
 R_tot_onebin_Retina = []
 R_tot_glm_Retina = []
 for neuron_index in range(number_valid_neurons):
-    setup = 'full'
-    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, R_tot_shuffling, T_D_shuffling, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results_full(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    setup = 'full_bbc'
+    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
+    R_tot_bbc, T_D_index_bbc, max_valid_index_bbc = plots.get_R_tot(T, R_bbc, R_bbc_CI_lo)
+
+    # Load GLM R_tot
+    R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
+    R_tot_glm_Retina += [R_tot_glm/R_tot_bbc]
+
+    setup = 'full_shuffling'
+    R_tot_shuffling, T_D_shuffling, T, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+    R_tot_shuffling, T_D_index_shuffling, max_valid_index_shuffling = plots.get_R_tot(T, R_shuffling, R_shuffling_CI_lo)
     R_tot_shuffling_Retina += [R_tot_shuffling/R_tot_bbc]
 
     setup = 'fivebins'
-    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR,regularization_method = 'shuffling')
+    R_tot_fivebins, T_D_index_fivebins, max_valid_index_fivebins = plots.get_R_tot(T, R_fivebins, R_fivebins_CI_lo)
     R_tot_fivebins_Retina += [R_tot_fivebins/R_tot_bbc]
 
     setup = 'onebin'
-    R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR,regularization_method = 'shuffling')
+    R_tot_onebin, T_D_index_onebin, max_valid_index_onebin = plots.get_R_tot(T, R_onebin, R_onebin_CI_lo)
     R_tot_onebin_Retina += [R_tot_onebin/R_tot_bbc]
-
-    R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
-    R_tot_glm_Retina += [R_tot_glm/R_tot_bbc]
 
 R_tot_shuffling_Retina_median = np.median(R_tot_shuffling_Retina)
 R_tot_shuffling_Retina_median_loCI, R_tot_shuffling_Retina_median_hiCI = plots.get_CI_median(R_tot_shuffling_Retina)
@@ -101,23 +125,32 @@ R_tot_fivebins_Culture = []
 R_tot_onebin_Culture = []
 R_tot_glm_Culture = []
 for neuron_index in range(number_valid_neurons):
-    setup = 'full'
-    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, R_tot_shuffling, T_D_shuffling, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results_full(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    setup = 'full_bbc'
+    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
+    R_tot_bbc, T_D_index_bbc, max_valid_index_bbc = plots.get_R_tot(T, R_bbc, R_bbc_CI_lo)
+
+    # Load GLM R_tot
+    R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
+    R_tot_glm_Culture += [R_tot_glm/R_tot_bbc]
+
+    setup = 'full_shuffling'
+    R_tot_shuffling, T_D_shuffling, T, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+    R_tot_shuffling, T_D_index_shuffling, max_valid_index_shuffling = plots.get_R_tot(T, R_shuffling, R_shuffling_CI_lo)
     R_tot_shuffling_Culture += [R_tot_shuffling/R_tot_bbc]
 
     setup = 'fivebins'
-    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR,regularization_method = 'shuffling')
+    R_tot_fivebins, T_D_index_fivebins, max_valid_index_fivebins = plots.get_R_tot(T, R_fivebins, R_fivebins_CI_lo)
     R_tot_fivebins_Culture += [R_tot_fivebins/R_tot_bbc]
 
     setup = 'onebin'
-    R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR,regularization_method = 'shuffling')
+    R_tot_onebin, T_D_index_onebin, max_valid_index_onebin = plots.get_R_tot(T, R_onebin, R_onebin_CI_lo)
     R_tot_onebin_Culture += [R_tot_onebin/R_tot_bbc]
-
-    R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
-    R_tot_glm_Culture += [R_tot_glm/R_tot_bbc]
 
 R_tot_shuffling_Culture_median = np.median(R_tot_shuffling_Culture)
 R_tot_shuffling_Culture_median_loCI, R_tot_shuffling_Culture_median_hiCI = plots.get_CI_median(R_tot_shuffling_Culture)
@@ -294,6 +327,9 @@ ax2.bar(x=[6.5], height=[R_tot_shuffling_Culture_median], yerr=[[R_tot_shuffling
 ax2.bar(x=[7.0], height=[R_tot_fivebins_Culture_median], yerr=[[R_tot_fivebins_Culture_median-R_tot_fivebins_Culture_median_loCI], [R_tot_fivebins_Culture_median_hiCI-R_tot_fivebins_Culture_median]], width=.5, alpha=.95, color=green, ecolor="0.3", label='max five bins')
 ax2.bar(x=[7.5], height=[R_tot_onebin_Culture_median], yerr=[[R_tot_onebin_Culture_median-R_tot_onebin_Culture_median_loCI], [R_tot_onebin_Culture_median_hiCI-R_tot_onebin_Culture_median]], width=.5, alpha=.95,color='y', ecolor="0.3", label="single bin")
 ax2.bar(x=[8.0], height=[R_tot_glm_Culture_median], yerr=[[R_tot_glm_Culture_median-R_tot_glm_Culture_median_loCI], [R_tot_glm_Culture_median_hiCI-R_tot_glm_Culture_median]], width=.5, alpha=.95,color=violet, ecolor="0.3", label='GLM')
+
+# plt.savefig('{}/Rtot_relative_comparison.pdf'.format(PLOTTING_DIR),
+#             format="pdf", bbox_inches='tight')
 
 plt.show()
 plt.close()

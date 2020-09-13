@@ -34,7 +34,7 @@ def get_history_dependence(estimation_method,
     alphabet_size = alphabet_size_past * 2          # K
 
     if estimation_method == "bbc":
-        return bbc.bbc_estimator(symbol_counts,
+        return bbc.bbc_estimator_R(symbol_counts,
                                  past_symbol_counts,
                                  alphabet_size,
                                  alphabet_size_past,

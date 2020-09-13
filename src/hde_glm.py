@@ -21,7 +21,7 @@ __version__ = "unknown"
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 
-def get_temporal_depth(rec_length, run_index, analysis_settings):
+def get_temporal_depth(rec_length, run_index, analysis_settings, regularization_method = 'bbc'):
     analysis_dir = analysis_settings['ANALYSIS_DIR']
     merged_csv_file_name = '{}/statistics_merged.csv'.format(
         analysis_dir)
@@ -32,10 +32,8 @@ def get_temporal_depth(rec_length, run_index, analysis_settings):
         rec_length_label = label.split("-")[0]
         run_index_label = int(label.split("-")[2])
         if rec_length_label == rec_length and run_index == run_index_label:
-            temporal_depth_bbc = float(utl.load_from_CSV_file(
-                merged_csv_file, 'T_D_bbc')[line_index])
-            temporal_depth_shuffling = float(utl.load_from_CSV_file(
-                merged_csv_file, 'T_D_shuffling')[line_index])
+            temporal_depth = float(utl.load_from_CSV_file(
+                merged_csv_file, 'T_D_{}'.format(regularization_method))[line_index])
             analysis_num = int(utl.load_from_CSV_file(
                 merged_csv_file, 'analysis_num')[line_index])
             break
@@ -44,10 +42,10 @@ def get_temporal_depth(rec_length, run_index, analysis_settings):
     analysis_num_str = str(analysis_num)
     for i in range(4 - len(str(analysis_num))):
         analysis_num_str = '0' + analysis_num_str
-    return temporal_depth_bbc, temporal_depth_shuffling, analysis_num_str
+    return temporal_depth, analysis_num_str
 
 
-def load_embedding_parameters(rec_length, sample_index, analysis_settings):
+def load_embedding_parameters(rec_length, sample_index, analysis_settings, regularization_method = 'bbc'):
     analysis_dir = analysis_settings['ANALYSIS_DIR']
     analysis_dir_prefix = 'ANALYSIS'
     merged_csv_file_name = '{}/statistics_merged.csv'.format(
@@ -72,20 +70,12 @@ def load_embedding_parameters(rec_length, sample_index, analysis_settings):
         analysis_dir, analysis_dir_prefix + analysis_num_str)
     histdep_csv_file = open(histdep_csv_file_name, 'r')
     T = utl.load_from_CSV_file(histdep_csv_file, 'T')
-    d_bbc = utl.load_from_CSV_file(histdep_csv_file, 'number_of_bins_d_bbc')
-    kappa_bbc = utl.load_from_CSV_file(histdep_csv_file, 'scaling_k_bbc')
-    tau_bbc = utl.load_from_CSV_file(histdep_csv_file, 'first_bin_size_bbc')
-    embedding_parameters_bbc = np.array([T, d_bbc, kappa_bbc, tau_bbc])
-    d_shuffling = utl.load_from_CSV_file(
-        histdep_csv_file, 'number_of_bins_d_shuffling')
-    kappa_shuffling = utl.load_from_CSV_file(
-        histdep_csv_file, 'scaling_k_shuffling')
-    tau_shuffling = utl.load_from_CSV_file(
-        histdep_csv_file, 'first_bin_size_shuffling')
-    embedding_parameters_shuffling = np.array([
-        T, d_shuffling, kappa_shuffling, tau_shuffling])
+    d = utl.load_from_CSV_file(histdep_csv_file, 'number_of_bins_d_{}'.format(regularization_method))
+    kappa = utl.load_from_CSV_file(histdep_csv_file, 'scaling_k_{}'.format(regularization_method))
+    tau = utl.load_from_CSV_file(histdep_csv_file, 'first_bin_size_{}'.format(regularization_method))
+    embedding_parameters = np.array([T, d, kappa, tau])
     histdep_csv_file.close()
-    return embedding_parameters_bbc, embedding_parameters_shuffling, analysis_num_str
+    return embedding_parameters, analysis_num_str
 
 
 def get_embeddings_for_optimization(past_range, d, max_first_bin_size):

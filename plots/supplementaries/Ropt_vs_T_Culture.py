@@ -52,8 +52,7 @@ neuron = validNeurons[neuron_index]
 
 R_tot, T_D, T, R, R_CI_lo, R_CI_hi = plots.load_analysis_results(
     recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
-R_tot, T_D_index, max_valid_index = plots.get_R_tot(T, R, R_CI_lo)
-# T_D_new, R_tot_new, T_D_index, max_valid_index = plots.get_temporal_depth_and_R_tot(T, R)
+T_D_new, R_tot_new, T_D_index, max_valid_index = plots.get_temporal_depth_and_R_tot(T, R)
 
 """Plot"""
 

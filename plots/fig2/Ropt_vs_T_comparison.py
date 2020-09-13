@@ -29,6 +29,7 @@ PLOTTING_DIR = '/home/lucas/research/papers/history_dependence/arXiv/figs/{}'.fo
 if 'hde_glm' not in modules:
     import hde_glm as glm
     import hde_utils as utl
+    import hde_plotutils as plots
 
 sample_index = 0
 rec_length = '90min'
@@ -42,7 +43,7 @@ with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as
 
 ANALYSIS_DIR = analysis_settings['ANALYSIS_DIR']
 analysis_num_str = glm.load_embedding_parameters(
-    rec_length, sample_index, analysis_settings)[2]
+    rec_length, sample_index, analysis_settings)[1]
 
 """Load data """
 
@@ -96,9 +97,11 @@ statistics_pd = pd.read_csv(statistics_csv_file_name)
 
 R_tot_bbc = statistics_pd['R_tot_bbc'][0]
 T_D_bbc = statistics_pd['T_D_bbc'][0]
+T_D_bbc_new, R_tot_bbc_new, R_tot_std_bbc_new, T_D_index_bbc, max_valid_index_bbc = plots.get_temporal_depth_and_R_tot(T, R_bbc)
 
 R_tot_shuffling = statistics_pd['R_tot_shuffling'][0]
 T_D_shuffling = statistics_pd['T_D_shuffling'][0]
+T_D_shuffling_new, R_tot_shuffling_new, R_tot_std_shuffling_new, T_D_index_shuffling, max_valid_index_shuffling = plots.get_temporal_depth_and_R_tot(T, R_shuffling)
 
 bbc_tolerance = statistics_pd['bbc_tolerance'][0]
 
@@ -159,6 +162,10 @@ ax.fill_between(T, R_bbc_CI_lo, R_bbc_CI_hi, facecolor=main_red, alpha=0.3)
 ax.plot(T, R_shuffling, linewidth=1.2, color=main_blue, zorder=3)
 ax.fill_between(T, R_shuffling_CI_lo, R_shuffling_CI_hi,
                 facecolor=main_blue, alpha=0.3)
+
+ax.plot(T[T_D_index_bbc:max_valid_index_bbc], np.zeros(max_valid_index_bbc-T_D_index_bbc)+R_tot_bbc_new, color = '0.2',linestyle='--')
+ax.plot(T[T_D_index_shuffling:max_valid_index_shuffling], np.zeros(max_valid_index_shuffling-T_D_index_shuffling)+R_tot_shuffling_new, color = '0.2',linestyle='--')
+
 
 # Rtot and Tdepth bbc
 

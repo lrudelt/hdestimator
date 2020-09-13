@@ -33,23 +33,23 @@ R_bbc_uniform_list = []
 R_fivebins_uniform_list = []
 """Load data"""
 for neuron_index in range(number_valid_neurons):
-    setup = 'full'
-    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, R_tot_shuffling, T_D_shuffling, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results_full(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    setup = 'full_bbc'
+    ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
 
-    setup = 'full_uniform'
-    ANALYSIS_DIR, analysis_num_str, R_tot_bbc_uniform, T_D_bbc_uniform, R_tot_shuffling, T_D_shuffling, T, R_bbc_uniform, R_bbc_uniform_CI_lo, R_bbc_uniform_CI_hi, R_shuffling_uniform, R_shuffling_uniform_CI_lo, R_shuffling_uniform_CI_hi = plots.load_analysis_results_full(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    setup = 'full_bbc_uniform'
+    ANALYSIS_DIR, analysis_num_str, R_tot_bbc_uniform, T_D_bbc_uniform, T, R_bbc_uniform, R_bbc_uniform_CI_lo, R_bbc_uniform_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
     R_bbc_uniform = R_bbc_uniform/R_bbc
     R_bbc_uniform_list += [R_bbc_uniform]
 
     setup = 'fivebins'
-    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
 
     setup = 'fivebins_uniform'
-    R_tot_fivebins_uniform, T_D_fivebins_uniform, T, R_fivebins_uniform, R_fivebins_uniform_CI_lo, R_fivebins_uniform_CI_hi = plots.load_analysis_results_shuffling(
-        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+    R_tot_fivebins_uniform, T_D_fivebins_uniform, T, R_fivebins_uniform, R_fivebins_uniform_CI_lo, R_fivebins_uniform_CI_hi = plots.load_analysis_results(
+        recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
     R_fivebins_uniform = R_fivebins_uniform/R_bbc
     R_fivebins_uniform_list += [R_fivebins_uniform]
 

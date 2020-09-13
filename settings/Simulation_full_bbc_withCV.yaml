@@ -1,8 +1,6 @@
-estimation_method : all
+estimation_method : bbc
 
 embedding_number_of_bins_set : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-
-cross_validated_optimization : False
 
 embedding_past_range_set : [0.005, 0.00561, 0.00629, 0.00706, 0.00792,
 0.00889, 0.00998, 0.01119, 0.01256, 0.01409, 0.01581, 0.01774,
@@ -13,4 +11,4 @@ embedding_past_range_set : [0.005, 0.00561, 0.00629, 0.00706, 0.00792,
 0.70627, 0.79245, 0.88914, 0.99763, 1.11936, 1.25594, 1.40919,
 1.58114, 1.77407, 1.99054, 2.23342, 2.50594, 2.81171, 3.0]
 
-ANALYSIS_DIR : /data.nst/lucas/history_dependence/paper/simulation_data/analysis_full
+ANALYSIS_DIR : /data.nst/lucas/history_dependence/paper/simulation_data/analysis_full_bbc_withCV

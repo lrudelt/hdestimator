@@ -37,22 +37,34 @@ neuron_index = 10  # Neuron 38
     # statistics_pd.columns
 
 """Load data full"""
-setup = 'full'
-ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, R_tot_shuffling, T_D_shuffling, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results_full(
-    recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+setup = 'full_bbc'
+ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
+# T_D_bbc, R_tot_bbc, R_tot_std_bbc, T_D_index_bbc, max_valid_index_bbc = plots.get_temporal_depth_and_R_tot(T, R_bbc)
+R_tot_bbc, T_D_index_bbc, max_valid_index_bbc = plots.get_R_tot(T, R_bbc, R_bbc_CI_lo)
 
 # Get R_tot_glm for T_D
-R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
+# R_tot_glm = plots.load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str)
+
+setup = 'full_shuffling'
+R_tot_shuffling, T_D_shuffling, T, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+# T_D_shuffling, R_tot_shuffling, R_tot_std_shuffling, T_D_index_shuffling, max_valid_index_shuffling = plots.get_temporal_depth_and_R_tot(T, R_shuffling)
+R_tot_shuffling, T_D_index_shuffling, max_valid_index_shuffling = plots.get_R_tot(T, R_shuffling, R_shuffling_CI_lo)
 
 """Load data five bins"""
 setup = 'fivebins'
-R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results_shuffling(
-    recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+R_tot_fivebins, T_D_fivebins, T, R_fivebins, R_fivebins_CI_lo, R_fivebins_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+# T_D_fivebins, R_tot_fivebins, R_tot_std_fivebins, T_D_index_fivebins, max_valid_index_fivebins = plots.get_temporal_depth_and_R_tot(T, R_fivebins)
+R_tot_fivebins, T_D_index_fivebins, max_valid_index_fivebins = plots.get_R_tot(T, R_fivebins, R_fivebins_CI_lo)
 
 """Load data onebins"""
 setup = 'onebin'
-R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results_shuffling(
-    recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR)
+R_tot_onebin, T_D_onebin, T, R_onebin, R_onebin_CI_lo, R_onebin_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, neuron_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+# T_D_onebin, R_tot_onebin, R_tot_std_onebin, T_D_index_onebin, max_valid_index_onebin = plots.get_temporal_depth_and_R_tot(T, R_onebin)
+R_tot_onebin, T_D_index_onebin, max_valid_index_onebin = plots.get_R_tot(T, R_onebin, R_onebin_CI_lo)
 
 """Plotting"""
 # Font

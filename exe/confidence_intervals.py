@@ -23,7 +23,9 @@ codedirectory = '/home/lucas/research/projects/history_dependence/hdestimator'
 
 load_script = '{}/exe/load_data_{}.py'.format(
     codedirectory, recorded_system)
-setting_file = '{}/settings/{}_{}_withCI.yaml'.format(
+# setting_file = '{}/settings/{}_{}_withCI.yaml'.format(
+#     codedirectory, recorded_system, setup)
+setting_file = '{}/settings/{}_{}.yaml'.format(
     codedirectory, recorded_system, setup)
 
 program = '/home/lucas/anaconda2/envs/python3/bin/python'
@@ -31,10 +33,10 @@ program = '/home/lucas/anaconda2/envs/python3/bin/python'
 script = '%s/estimate.py' % (codedirectory)
 
 # For the first sample, produce confidence intervals and plots
-command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
-    ' --label "{}-{}-{}"'.format(rec_length,
-                                 setup, str(run_index))
-call(command, shell=True)
+# command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t conf -p -s ' + setting_file + \
+#     ' --label "{}-{}-{}"'.format(rec_length,
+#                                  setup, str(run_index))
+# call(command, shell=True)
 command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t csv -p -s ' + setting_file + \
     ' --label "{}-{}-{}"'.format(rec_length,
                                  setup, str(run_index))

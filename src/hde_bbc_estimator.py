@@ -260,7 +260,7 @@ def get_multiplicities(symbol_counts, alphabet_size):
     return mk
 
 
-def bayesian_bias_criterion(H_nsb, H_plugin, H_uncond, bbc_tolerance):
+def bayesian_bias_criterion_R(I_nsb, I_plugin, bbc_tolerance):
     """
     Get whether the Bayesian bias criterion (bbc) is passed.
 
@@ -270,7 +270,38 @@ def bayesian_bias_criterion(H_nsb, H_plugin, H_uncond, bbc_tolerance):
     :param bbc_tolerance: tolerance for the Bayesian bias criterion
     """
 
-    if get_bbc_term(H_nsb, H_plugin, H_uncond) < bbc_tolerance:
+    if get_bbc_term_R(I_nsb, I_plugin) < bbc_tolerance:
+        return 1
+    else:
+        return 0
+
+
+def get_bbc_term_R(I_nsb, I_plugin):
+    """
+    Get the bbc-tolerance-independent term of the Bayesian bias
+    criterion (bbc).
+
+    :param H_NSB: NSB entropy
+    :param H_plugin: Plugin entropy
+    :param H_uncond: (Unconditional) entropy of the spike train, aka H_spiking
+    """
+
+    if I_nsb > 0:
+        return np.abs(I_nsb - I_plugin) / I_nsb
+    else:
+        return np.inf
+
+def bayesian_bias_criterion(H_nsb, H_plugin, H_uncond, history_dependence, bbc_tolerance):
+    """
+    Get whether the Bayesian bias criterion (bbc) is passed.
+
+    :param H_NSB: NSB entropy
+    :param H_plugin: Plugin entropy
+    :param H_uncond: (Unconditional) entropy of the spike train, aka H_spiking
+    :param bbc_tolerance: tolerance for the Bayesian bias criterion
+    """
+
+    if get_bbc_term(H_nsb, H_plugin, H_uncond) < bbc_tolerance * history_dependence:
         return 1
     else:
         return 0
@@ -291,7 +322,7 @@ def get_bbc_term(H_nsb, H_plugin, H_uncond):
     else:
         return np.inf
 
-def bbc_estimator(symbol_counts,
+def bbc_estimator_R(symbol_counts,
                   past_symbol_counts,
                   alphabet_size,
                   alphabet_size_past,
@@ -328,11 +359,52 @@ def bbc_estimator(symbol_counts,
         ret_val = np.float(history_dependence)
 
     if not bbc_tolerance == None:
-        if bayesian_bias_criterion(I_nsb, I_plugin, I_nsb, bbc_tolerance):
+        if bayesian_bias_criterion_R(I_nsb, I_plugin, bbc_tolerance):
             return ret_val
         else:
             return None
     else:
-        return ret_val, np.float(get_bbc_term(I_nsb,
-                                              I_plugin,
-                                              I_nsb))
+        return ret_val, np.float(get_bbc_term_R(I_nsb, I_plugin))
+
+
+def bbc_estimator(symbol_counts,
+                  past_symbol_counts,
+                  alphabet_size,
+                  alphabet_size_past,
+                  H_uncond,
+                  bbc_tolerance=None,
+                  return_ais=False):
+    """
+    Estimate the entropy of a system using the BBC estimator.
+    """
+
+    mk = get_multiplicities(symbol_counts,
+                            alphabet_size)
+    mk_past = get_multiplicities(past_symbol_counts,
+                                 alphabet_size_past)
+
+    N = sum((mk[n] * n for n in mk.keys()))
+
+    H_nsb_joint = nsb_entropy(mk, alphabet_size, N)
+    H_nsb_past = nsb_entropy(mk_past, alphabet_size_past, N)
+
+    H_nsb_cond = H_nsb_joint - H_nsb_past
+    I_nsb = H_uncond - H_nsb_cond
+    history_dependence = I_nsb / H_uncond
+
+    H_plugin_joint = plugin_entropy(mk, N)
+
+    if return_ais:
+        ret_val = np.float(I_nsb)
+    else:
+        ret_val = np.float(history_dependence)
+
+    if not bbc_tolerance == None:
+        if bayesian_bias_criterion(H_nsb_joint, H_plugin_joint, H_uncond, history_dependence, bbc_tolerance):
+            return ret_val
+        else:
+            return None
+    else:
+        return ret_val, np.float(get_bbc_term(H_nsb_joint,
+                                              H_plugin_joint,
+H_uncond))

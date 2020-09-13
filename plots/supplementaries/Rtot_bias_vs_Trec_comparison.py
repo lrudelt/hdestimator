@@ -102,14 +102,16 @@ for setup in setups:
             number_samples = 10
         for sample_index in range(number_samples):
             analysis_num_str = glm.load_embedding_parameters(
-                rec_length, sample_index, analysis_settings)[2]
+                rec_length, sample_index, analysis_settings)[1]
             # Embedding optimized estimates and confidence intervals
-            # hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
-            #     ANALYSIS_DIR, analysis_num_str)
-            # hisdep_pd = pd.read_csv(hisdep_csv_file_name)
-            # R_bbc = np.array(hisdep_pd['max_R_bbc'])
-            # R_shuffling = np.array(hisdep_pd['max_R_shuffling'])
-            # T = np.array(hisdep_pd['#T'])
+            hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
+                ANALYSIS_DIR, analysis_num_str)
+            hisdep_pd = pd.read_csv(hisdep_csv_file_name)
+            R_bbc = np.array(hisdep_pd['max_R_bbc'])
+            R_shuffling = np.array(hisdep_pd['max_R_shuffling'])
+            T = np.array(hisdep_pd['#T'])
+            T_D, R_tot_bbc, R_tot_std, T_D_index_bbc, max_valid_index_bbc = plots.get_temporal_depth_and_R_tot(T, R_bbc)
+            T_D, R_tot_shuffling, R_tot_std, T_D_index_shuffling, max_valid_index_shuffling = plots.get_temporal_depth_and_R_tot(T, R_shuffling)
 
             # Temporal depth and total history dependence
             statistics_csv_file_name = '{}/ANALYSIS{}/statistics.csv'.format(
@@ -121,23 +123,31 @@ for setup in setups:
             glm_bbc_pd = pd.read_csv(glm_bbc_csv_file_name)
             T = np.array(glm_bbc_pd['T'])
             R_glm_bbc = np.array(glm_bbc_pd['R_GLM'])
+            T_D_index = np.where(np.array(hisdep_pd['#T'])==T[0])[0][0]
+            max_valid_index = np.where(np.array(hisdep_pd['#T'])==T[-1])[0][0]+1
+            R_bbc = R_bbc[T_D_index:max_valid_index]
+
 
             # TODO: Recompute T based on T in glm benchmark file to load R_tot_glm_bbc
-            R_tot_bbc = statistics_pd['R_tot_bbc'][0]
-            T_D_bbc = statistics_pd['T_D_bbc'][0]
-            T_index = np.where(T == T_D_bbc)[0][0]
-            R_tot_glm_bbc = R_glm_bbc[T_index]
+            # R_tot_bbc = statistics_pd['R_tot_bbc'][0]
+            # T_D_bbc = statistics_pd['T_D_bbc'][0]
+            # T_index = np.where(T == T_D_bbc)[0][0]
+            # R_tot_glm_bbc = R_glm_bbc[T_index]
 
             glm_shuffling_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_shuffling.csv'.format(
                 ANALYSIS_DIR, analysis_num_str)
             glm_shuffling_pd = pd.read_csv(glm_shuffling_csv_file_name)
             T = np.array(glm_shuffling_pd['T'])
             R_glm_shuffling = np.array(glm_shuffling_pd['R_GLM'])
+            T_D_index = np.where(np.array(hisdep_pd['#T'])==T[0])[0][0]
+            max_valid_index = np.where(np.array(hisdep_pd['#T'])==T[-1])[0][0]+1
+            R_shuffling = R_shuffling[T_D_index:max_valid_index]
 
-            R_tot_shuffling = statistics_pd['R_tot_shuffling'][0]
-            T_D_shuffling = statistics_pd['T_D_shuffling'][0]
-            T_index = np.where(T == T_D_shuffling)[0][0]
-            R_tot_glm_shuffling = R_glm_shuffling[T_index]
+            #
+            # R_tot_shuffling = statistics_pd['R_tot_shuffling'][0]
+            # T_D_shuffling = statistics_pd['T_D_shuffling'][0]
+            # T_index = np.where(T == T_D_shuffling)[0][0]
+            # R_tot_glm_shuffling = R_glm_shuffling[T_index]
 
             # rel_bias_bbc += [100 * (R_bbc - R_glm_bbc) / R_glm_bbc]
             # rel_bias_shuffling += [100 * (R_shuffling -
@@ -148,16 +158,24 @@ for setup in setups:
             #                          (R_bbc[30] - R_glm_bbc[30]) / R_glm_bbc[30]]
             # rel_bias_bbc_highT += [100 *
             #                        (R_bbc[50] - R_glm_bbc[50]) / R_glm_bbc[50]]
+            # rel_bias_bbc_T_D += [100 *
+            #                      (R_tot_bbc - R_tot_glm_bbc) / R_tot_glm_bbc]
             rel_bias_bbc_T_D += [100 *
-                                 (R_tot_bbc - R_tot_glm_bbc) / R_tot_glm_bbc]
+                                 np.mean(R_bbc - R_glm_bbc) / R_tot_bbc]
             # rel_bias_shuffling_lowT += [
             #     100 * (R_shuffling[10] - R_glm_shuffling[10]) / R_glm_shuffling[10]]
             # rel_bias_shuffling_mediumT += [
             #     100 * (R_shuffling[30] - R_glm_shuffling[30]) / R_glm_shuffling[30]]
             # rel_bias_shuffling_highT += [
             #     100 * (R_shuffling[50] - R_glm_shuffling[50]) / R_glm_shuffling[50]]
+
+
+            # rel_bias_shuffling_T_D += [100 *
+            #                            (R_tot_shuffling - R_tot_glm_shuffling) / R_tot_glm_shuffling]
             rel_bias_shuffling_T_D += [100 *
-                                       (R_tot_shuffling - R_tot_glm_shuffling) / R_tot_glm_shuffling]
+                                       np.mean(R_shuffling - R_glm_shuffling) / R_tot_shuffling]
+
+
         # median_rel_bias_lowT['bbc-{}-{}'.format(setup, rec_length)
         #                      ] = np.median(rel_bias_bbc_lowT)
         # median_CI_rel_bias_lowT['bbc-{}-{}'.format(setup, rec_length)
@@ -243,7 +261,7 @@ for j, setup in enumerate(setups):
 
         ##### y-axis ####
         # ax.set_ylabel(r'$M$')
-        ax.set_ylim((-5, 15))
+        ax.set_ylim((-10, 10))
         # ax.set_yticks([0.0, 0.08, 0.16])
         # ax.spines['left'].set_bounds(.0, 0.16)
 
@@ -312,10 +330,7 @@ for j, setup in enumerate(setups):
 # ax.text(T_D_shuffling + 0.15 * Tm_eff, .101, r'$\hat{T}_D$')
 
 fig.tight_layout(pad=1.0, w_pad=1.0, h_pad=1.0)
-# fig.savefig("Subsampling_fixed_Cat.pdf")
 plt.savefig('{}/Rtot_bias_vs_Trec_comparison.pdf'.format(PLOTTING_DIR),
             format="pdf", bbox_inches='tight')
-# plt.savefig('../Mopt_vs_Tm_model_comparison.png',
-#             format="png", dpi=300, bbox_inches='tight')
 plt.show()
 plt.close()

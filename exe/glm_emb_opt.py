@@ -20,6 +20,9 @@ EXIT_FAILURE = 1
 """Run parameters"""
 device = argv[1]
 recorded_system = argv[2]
+rec_length = argv[3]
+setup = argv[4]
+
 
 if device == 'cluster':
     os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -78,7 +81,7 @@ def main_Experiments():
     # Load settings
     with open('{}/settings/{}_glm.yaml'.format(ESTIMATOR_DIR, recorded_system), 'r') as glm_settings_file:
         glm_settings = yaml.load(glm_settings_file, Loader=yaml.BaseLoader)
-    with open('{}/settings/{}_full.yaml'.format(ESTIMATOR_DIR, recorded_system), 'r') as analysis_settings_file:
+    with open('{}/settings/{}_{}.yaml'.format(ESTIMATOR_DIR, recorded_system, setup), 'r') as analysis_settings_file:
         analysis_settings = yaml.load(
             analysis_settings_file, Loader=yaml.BaseLoader)
     # Load and preprocess spiketimes and compute binary counts for current spiking
@@ -86,11 +89,11 @@ def main_Experiments():
         recorded_system, neuron_index, glm_settings)
 
     # Get the past range for which R should be estimated
-    temporal_depth_bbc, temporal_depth_shuffling, analysis_num_str = glm.get_temporal_depth(
-        rec_length, neuron_index, glm_settings)
+    temporal_depth_bbc, analysis_num_str = glm.get_temporal_depth(
+        rec_length, neuron_index, glm_settings, regularization_method = 'bbc')
 
-    embedding_parameters_bbc, embedding_parameters_shuffling, analysis_num_str = glm.load_embedding_parameters(
-        rec_length, neuron_index, analysis_settings)
+    embedding_parameters_bbc, analysis_num_str = glm.load_embedding_parameters(
+        rec_length, neuron_index, analysis_settings, regularization_method = 'bbc')
     embedding_parameters_bbc = embedding_parameters_bbc[:,
                                                         embedding_parameters_bbc[0] == temporal_depth_bbc]
 
