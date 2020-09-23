@@ -1,98 +1,109 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri May 18 12:30:11 2018
-
-@author: lucas
-"""
 
 """Functions"""
+import os
+import sys
+from sys import exit, stderr, argv, path, modules
+from os.path import isfile, isdir, realpath, dirname, exists
+from scipy.optimize import bisect
+import csv
+import yaml
+import numpy as np
+import pandas as pd
+# plotting
 import seaborn.apionly as sns
 from scipy.optimize import bisect
 from matplotlib import rc
 import matplotlib.lines as mlines
 import pylab as plt
 import matplotlib
-import numpy as np
-import sys
-sys.path.append('../../Functions')
-#import plotutils
 
-load_path = "../../../../Data/Simulated/analysis_Data/"
+# ESTIMATOR_DIR = '{}/../..'.format(dirname(realpath(__file__)))
+ESTIMATOR_DIR = '/home/lucas/research/projects/history_dependence/hdestimator'
+path.insert(1, '{}/src'.format(ESTIMATOR_DIR))
 
-"""Parameters"""
-duration = '90min'
-p_dict = {'1min': 0.01, '5min': 0.01, '10min': 0.02,
-          '20min': 0.02, '45min': 0.02, '90min': 0.02}
-p = p_dict[duration]
-T_0 = 100. - 10**(-4)
-# shift time to avoid spiketimes on bin edges, 100 s burnin
-T_f = 54100.
-T = T_f - T_0  # 90 min recording
-t_bin = 0.005
-N_d = 30
-d_max = 50
-d_min = 1
-kappa_d = bisect(lambda kappa: np.sum(
-    [d_min * np.power(10, i * kappa) for i in range(N_d)]) - d_max, 0, 1.)
-d = 0
-d_list = []
-for i in range(N_d):
-    d += np.power(10, kappa_d * i)
-    d_list += [d]
+# fig = dirname(realpath(__file__)).split("/")[-1]
+fig = 'fig2'
+PLOTTING_DIR = '/home/lucas/research/papers/history_dependence/arXiv/figs/{}'.format(
+    fig)
 
-d_list = np.array(d_list).astype(int)
-kappa = 0.0  # linear binning
-mode = 'medians'
-binning_mode = 'equalbins'
-tau = 0.02
-N_kappa = 25
-Tm_0 = 0.01
-Tm_f = 3.  # Simulated
-N_Tm = 50
-Tm_list = np.zeros(N_Tm)
-kappa_Tm = bisect(lambda kappa: np.sum(
-    Tm_0 * np.power(10, np.arange(50) * kappa)) - Tm_f, -1., 10)
-Tm = 0
-for k in range(N_Tm):
-    Tm += Tm_0 * np.power(10, k * kappa_Tm)
-    Tm_list[k] = Tm
+if 'hde_glm' not in modules:
+    import hde_glm as glm
+    import hde_utils as utl
+    import hde_plotutils as plots
 
+recorded_system = 'Simulation'
+rec_length = '90min'
+sample_index = 0
+
+"""Load old data """
+
+# These you should use for now, but they should be updated for publication!
+ana_data_path = '/home/lucas/research/projects/history_dependence/analysis/Data/Simulated/analysis_Data'
+R_max = np.loadtxt("%s/M_max_5ms.dat" % ana_data_path)
+# old T_list
+Tmin = 0.01
+Tmax = 3.
+N_T = 50
+T_old = np.zeros(N_T)
+kappa_T = bisect(lambda kappa: np.sum(
+    Tmin * np.power(10, np.arange(50) * kappa)) - Tmax, -1., 10)
+T = 0
+for k in range(N_T):
+    T += Tmin * np.power(10, k * kappa_T)
+    T_old[k] = T
+T_old = np.delete(T_old, (23, 34, 42))
+R_GLM_BIC = np.delete(np.loadtxt(
+    '%s/M_GLM_max.dat' % ana_data_path), (23, 34, 42))
 
 """Load data """
+# Load settings from yaml file
+setup = 'full_bbc'
+with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
+    analysis_settings = yaml.load(
+        analysis_settings_file, Loader=yaml.BaseLoader)
 
-"""Simulated"""
-M_max = np.loadtxt("%sM_max_5ms.dat" % load_path)
-if duration == '90min':
-    M_BBC = np.loadtxt('%sM_NSB_exp_opt_90min_p%d.dat' % (load_path, p * 100))
-    M_GLM_NSB_exp = np.loadtxt(
-        '%sM_GLM_exp_opt_90min_p%d.dat' % (load_path, p * 100))
-    M_BBC_mean = np.loadtxt('%sM_NSB_opt_mean_%s_p%d.dat'
-                            % (load_path, duration, int(p * 100)))
-    M_BBC_std = np.loadtxt('%sM_NSB_opt_std_%s_p%d.dat'
-                           % (load_path, duration, int(p * 100)))
-else:
-    M_BBC = np.loadtxt('%sM_NSB_exp_opt_iid_%s_k%d_dmax%d_p%d.dat' %
-                       (load_path, duration, N_kappa, d_max, p * 100))  # result based on 90 min iid drawn samples
-    M_BBC_mean = np.loadtxt('%sM_NSB_opt_iid_mean_%s_k%d_dmax%d_p%d.dat'
-                            % (load_path, duration, N_kappa, d_max, int(p * 100)))
-    M_BBC_std = np.loadtxt('%sM_NSB_opt_iid_std_%s_k%d_dmax%d_p%d.dat'
-                           % (load_path, duration, N_kappa, d_max, int(p * 100)))
+ANALYSIS_DIR = analysis_settings['ANALYSIS_DIR']
+analysis_num_str = glm.load_embedding_parameters(
+    rec_length, sample_index, analysis_settings)[1]
 
-M_shuffled = np.loadtxt('%sM_sh_plugin_exp_opt_iid_%s_k%d_dmax%d.dat' %
-                        (load_path, duration, N_kappa, d_max))
-M_shuffled_mean = np.loadtxt('%sM_sh_plugin_opt_iid_mean_%s_k%d_dmax%d.dat'
-                             % (load_path, duration, N_kappa, d_max))
-M_shuffled_std = np.loadtxt('%sM_sh_plugin_opt_iid_std_%s_k%d_dmax%d.dat'
-                            % (load_path, duration, N_kappa, d_max))
+ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, sample_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
 
-# M_GLM_NSB_exp=np.loadtxt('%sM_GLM_NSB_exp_opt_90min_k%d_dmax%d_p%d.dat'%(N_kappa,d_max,p*100))
-M_GLM_BIC = np.delete(np.loadtxt('%sM_GLM_max.dat' % load_path), (23, 34, 42))
+R_tot_bbc, T_D_index_bbc, max_valid_index_bbc = plots.get_R_tot(T, R_bbc, R_bbc_CI_lo)
 
+glm_bbc_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_bbc.csv'.format(
+    ANALYSIS_DIR, analysis_num_str)
+glm_bbc_pd = pd.read_csv(glm_bbc_csv_file_name)
+R_glm_bbc = np.array(glm_bbc_pd['R_GLM'])
+
+setup = 'full_shuffling'
+with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
+    analysis_settings = yaml.load(
+        analysis_settings_file, Loader=yaml.BaseLoader)
+
+ANALYSIS_DIR = analysis_settings['ANALYSIS_DIR']
+analysis_num_str = glm.load_embedding_parameters(
+    rec_length, sample_index, analysis_settings)[1]
+
+R_tot_shuffling, T_D_shuffling, T, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, sample_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+
+R_tot_shuffling, T_D_index_shuffling, max_valid_index_shuffling = plots.get_R_tot(T, R_shuffling, R_shuffling_CI_lo)
+
+analysis_num_str = glm.load_embedding_parameters(
+    rec_length, sample_index, analysis_settings)[1]
+
+glm_shuffling_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_shuffling.csv'.format(
+    ANALYSIS_DIR, analysis_num_str)
+glm_shuffling_pd = pd.read_csv(glm_shuffling_csv_file_name)
+R_glm_shuffling = np.array(glm_shuffling_pd['R_GLM'])
+
+"""Plotting"""
 rc('text', usetex=True)
-matplotlib.rcParams['font.size'] = '14.0'
-matplotlib.rcParams['xtick.labelsize'] = '14'
-matplotlib.rcParams['ytick.labelsize'] = '14'
-matplotlib.rcParams['legend.fontsize'] = '14'
+matplotlib.rcParams['font.size'] = '15.0'
+matplotlib.rcParams['xtick.labelsize'] = '15'
+matplotlib.rcParams['ytick.labelsize'] = '15'
+matplotlib.rcParams['legend.fontsize'] = '15'
 matplotlib.rcParams['axes.linewidth'] = 0.6
 
 fig, ((ax)) = plt.subplots(1, 1, figsize=(3.5, 2.8))
@@ -130,61 +141,27 @@ ax.spines['left'].set_bounds(.0, 0.15)
 ax.spines['top'].set_bounds(0, 0)
 ax.spines['right'].set_bounds(0, 0)
 
-# a11.text(np.log(15), 0.17, r'$\hat{M}$',
-#         color='0.05', ha='left', va='bottom')
+ax.text(.02, 0.134, r'$R_{\mathrm{tot}}$',
+        color='0.0', ha='left', va='bottom')
 
-# ax.text(0.04, 0.136, r'$M_{max}$',
-#         color='0.5', ha='left', va='bottom')
+ax.plot([T[0], T[-1]], [R_max, R_max], '--', color='0.5', zorder=1)
+ax.plot(T_old, R_GLM_BIC, color='.5', zorder=3)
 
+ax.plot(T, R_bbc, linewidth=1.2,  color=main_red, zorder=4)
+ax.fill_between(T, R_bbc_CI_lo, R_bbc_CI_hi, facecolor=main_red, alpha=0.3)
+ax.plot(T, R_shuffling, linewidth=1.2, color=main_blue, zorder=3)
+ax.fill_between(T, R_shuffling_CI_lo, R_shuffling_CI_hi,
+                facecolor=main_blue, alpha=0.3)
 
-#ax1.plot([np.log(50)], [0.1], marker=1, linewidth=1.0, color='firebrick')
+ax.plot(T[T_D_index_bbc:max_valid_index_bbc], np.zeros(max_valid_index_bbc-T_D_index_bbc)+R_tot_bbc, color = main_red,linestyle='--')
+ax.plot(T[T_D_index_shuffling:max_valid_index_shuffling], np.zeros(max_valid_index_shuffling-T_D_index_shuffling)+R_tot_shuffling, color = main_blue,linestyle='--')
 
-
-#
-
-
-# removing the axis ticks
-#
-
-
-# a11.text(np.log(15), 0.17, r'$\hat{M}$',
-#         color='0.05', ha='left', va='bottom')
-
-# ax1.text(6, 0.136, r'$M_{max}$',
-#         color='0.5', ha='left', va='bottom')
-#
-# ax.text(.02, 0.134, r'$R^*_{model}$',
-#         color='0.35', ha='left', va='bottom')
-ax.plot([Tm_0, Tm_f], [M_max, M_max], '--', color='0.5', zorder=1)
-# ax.plot(Tm_list[np.argmax(M_BBC)], [np.amax(M_GLM_NSB_exp)], color=0.5,
-# alpha=0.95,zorder=3)#, label='Model'
-ax.plot(np.delete(Tm_list, (23, 34, 42)), M_GLM_BIC, linewidth=1.2,
-        color='.5', label='true', zorder=8)
-# ax.plot(Tm_list[np.argmax(M_shuffled])], [np.amax(M_shuffled)], color=0.5, alpha=0.95,zorder=3)#, label='Model'
-#ax.plot(Tm_list, M_GLM_NSB_exp, color=soft_red, alpha=0.7,zorder=3)
-ax.plot(Tm_list, M_BBC, linewidth=1.2,  color=main_red,
-        label=r'BBC', zorder=4)
-ax.fill_between(Tm_list, M_BBC - M_BBC_std, M_BBC +
-                M_BBC_std, facecolor=main_red, alpha=0.3)
-ax.plot(Tm_list, M_shuffled, linewidth=1.2,
-        color=main_blue, label=r'Shuffling', zorder=3)
-ax.fill_between(Tm_list, M_shuffled - M_shuffled_std,
-                M_shuffled + M_shuffled_std, facecolor=main_blue, alpha=0.3)
-#ax1.errorbar(d_list, M_PT_Simulated, yerr=M_PT_Simulated_err, color='C1', label='PT')
 ax.legend(loc=(.38, .02), frameon=False)
-
-#ax1.plot([np.log(50)], [0.1], marker=1, linewidth=1.0, color='firebrick')
-#ax1.legend(loc=2, fontsize=10., frameon=False)
 
 
 fig.tight_layout(pad=1.0, w_pad=1.0, h_pad=1.0)
-# plt.savefig('../Mopt_vs_Tm_model_%s.pdf' % duration,
-#             format="pdf", bbox_inches='tight')
-# plt.savefig('Poster/Mopt_vs_Tm_model_%s.png' % duration,
-#             format="png", dpi=600, bbox_inches='tight')
-plt.savefig('../../Paper_Figures/fig2_benchmarks/Ropt_vs_T_model_%s.pdf' % duration,
+plt.savefig('{}/Ropt_vs_T.pdf'.format(PLOTTING_DIR),
             format="pdf", bbox_inches='tight')
-# plt.savefig('../Mopt_vs_Tm_model_%s.png' % duration,
-#             format="png", dpi=600, bbox_inches='tight')
+
 plt.show()
 plt.close()

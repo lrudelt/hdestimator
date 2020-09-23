@@ -11,24 +11,27 @@ def load_analysis_results(recorded_system, rec_length, run_index, setup, ESTIMAT
     statistics_merged_csv_file_name = '{}/statistics_merged.csv'.format(
         ANALYSIS_DIR)
     statistics_pd = pd.read_csv(statistics_merged_csv_file_name)
-    index = np.where(statistics_pd['label'] == rec_length + "-" + setup + "-" + str(run_index))[0][0]
-    analysis_num_str = str(statistics_pd['#analysis_num'][index])
-    for i in range(4 - len(analysis_num_str)):
-        analysis_num_str = '0' + analysis_num_str
-    R_tot = statistics_pd['R_tot_{}'.format(regularization_method)][index]
-    T_D = statistics_pd['T_D_{}'.format(regularization_method)][index]
-    # Get T, R(T) plus confidence intervals
-    hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
-        ANALYSIS_DIR, analysis_num_str)
-    hisdep_pd = pd.read_csv(hisdep_csv_file_name)
-    R = np.array(hisdep_pd['max_R_{}'.format(regularization_method)])
-    R_CI_lo = np.array(hisdep_pd['max_R_{}_CI_lo'.format(regularization_method)])
-    R_CI_hi = np.array(hisdep_pd['max_R_{}_CI_hi'.format(regularization_method)])
-    T = np.array(hisdep_pd['#T'])
-    if regularization_method == 'bbc':
-        return ANALYSIS_DIR, analysis_num_str, R_tot, T_D, T, R, R_CI_lo, R_CI_hi
+    index_list = np.where(statistics_pd['label'] == rec_length + "-" + setup + "-" + str(run_index))[0]
+    if len(index_list)==0:
+        return None
     else:
-        return R_tot, T_D, T, R, R_CI_lo, R_CI_hi
+        index = index_list[0]
+        analysis_num_str = str(statistics_pd['#analysis_num'][index])
+        for i in range(4 - len(analysis_num_str)):
+            analysis_num_str = '0' + analysis_num_str
+        # Get T, R(T) plus confidence intervals
+        hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
+            ANALYSIS_DIR, analysis_num_str)
+        hisdep_pd = pd.read_csv(hisdep_csv_file_name)
+        R = np.array(hisdep_pd['max_R_{}'.format(regularization_method)])
+        R_CI_lo = np.array(hisdep_pd['max_R_{}_CI_lo'.format(regularization_method)])
+        R_CI_hi = np.array(hisdep_pd['max_R_{}_CI_hi'.format(regularization_method)])
+        R_tot = statistics_pd['R_tot_{}'.format(regularization_method)][index]
+        T_D = statistics_pd['T_D_{}'.format(regularization_method)][index]
+        if not len(R) == 0:
+            T_D = float(T_D)
+        T = np.array(hisdep_pd['#T'])
+        return ANALYSIS_DIR, analysis_num_str, R_tot, T_D, T, R, R_CI_lo, R_CI_hi
 
 def load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str):
     glm_csv_file_name = '{}/ANALYSIS{}/glm_estimates_BIC.csv'.format(
@@ -60,13 +63,16 @@ def get_CI_mean(samples):
 
 def get_R_tot(T, R, R_CI_lo):
     R_max = np.amax(R)
-    std_R_max = (R_max - R_CI_lo[R == np.amax(R)][np.nonzero(R_max - R_CI_lo[R == np.amax(R)])][0])/2
-    T_D = T[R > R_max - std_R_max][0]
-    T_max_valid = T[R > R_max - std_R_max][-1]
-    T_D_index = np.where(T == T_D)[0][0]
-    max_valid_index = np.where(T == T_max_valid)[0][0]+1
-    R_tot = np.mean(R[T_D_index:max_valid_index])
-    return R_tot, T_D_index, max_valid_index
+    if len(np.nonzero(R-R_CI_lo)[0]) == 0:
+        return None
+    else:
+        std_R_max = (R_max - R_CI_lo[R == np.amax(R)][np.nonzero(R_max - R_CI_lo[R == np.amax(R)])][0])/2
+        T_D = T[R > R_max - std_R_max][0]
+        T_max_valid = T[R > R_max - std_R_max][-1]
+        T_D_index = np.where(T == T_D)[0][0]
+        max_valid_index = np.where(T == T_max_valid)[0][0]+1
+        R_tot = np.mean(R[T_D_index:max_valid_index])
+        return R_tot, T_D_index, max_valid_index
 
 
 def get_temporal_depth_and_R_tot(T, R, min_number_of_neighbors_for_avg = 2, minimum_offset = 0.01):
@@ -141,5 +147,5 @@ def get_temporal_depth_and_R_tot(T, R, min_number_of_neighbors_for_avg = 2, mini
     # T_D_index = possible_R_indices[-1]
     T_D = T[T_D_index]
     R_tot = np.mean(R[T_D_index:max_valid_index])
-    R_tot_std = np.std(R[T_D_index:max_valid_index])
-    return T_D, R_tot, R_tot_std, T_D_index, max_valid_index
+    # R_tot_std = np.std(R[T_D_index:max_valid_index])
+    return T_D, R_tot, T_D_index, max_valid_index

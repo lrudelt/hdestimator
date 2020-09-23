@@ -35,7 +35,7 @@ rec_lengths = ['1min', '3min', '5min', '10min', '20min', '45min', '90min']
 rec_length_values = [60., 180., 300., 600., 1200., 2700., 5400.]
 rec_lengths_colors_bbc = [sns.color_palette("RdBu_r", 15)[8], sns.color_palette("RdBu_r", 15)[9], sns.color_palette("RdBu_r", 15)[10], sns.color_palette(
     "RdBu_r", 15)[11], sns.color_palette("RdBu_r", 15)[12], sns.color_palette("RdBu_r", 15)[13], sns.color_palette("RdBu_r", 15)[14]]
-setups = ['full', 'full_withCV']
+setups = np.array([['full_bbc','full_bbc_withCV'], ['full_shuffling','full_shuffling_withCV']])
 # Only plot first sample
 
 """Plotting"""
@@ -65,116 +65,135 @@ rec_length_colors = {'bbc-1min': sns.color_palette("RdBu_r", 16)[9],
 
 
 """Load data for all plots"""
-median_rel_bias_lowT = {}
-median_CI_rel_bias_lowT = {}
-median_rel_bias_mediumT = {}
-median_CI_rel_bias_mediumT = {}
-median_rel_bias_highT = {}
-median_CI_rel_bias_highT = {}
-median_rel_bias_T_D = {}
-median_CI_rel_bias_T_D = {}
-mean_rel_bias_T_D = {}
-mean_CI_rel_bias_T_D = {}
+# median_rel_bias_lowT = {}
+# median_CI_rel_bias_lowT = {}
+# median_rel_bias_mediumT = {}
+# median_CI_rel_bias_mediumT = {}
+# median_rel_bias_highT = {}
+# median_CI_rel_bias_highT = {}
+# median_rel_bias_T_D = {}
+# median_CI_rel_bias_T_D = {}
+# mean_rel_bias_T_D = {}
+# mean_CI_rel_bias_T_D = {}
 
-std_rel_bias = {}
-for setup in setups:
+mean_rel_deviation_R_tot = {}
+mean_CI_rel_deviation_R_tot = {}
+
+for setup in setups.flatten():
     # Load settings from yaml file
     with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
         analysis_settings = yaml.load(
             analysis_settings_file, Loader=yaml.BaseLoader)
     ANALYSIS_DIR = analysis_settings['ANALYSIS_DIR']
     T = np.array(analysis_settings['embedding_past_range_set']).astype(float)
+    regularization_method = setup.split("_")[1]
     for rec_length in rec_lengths:
-        rel_bias_bbc = []
-        rel_bias_bbc_lowT = []
-        rel_bias_bbc_mediumT = []
-        rel_bias_bbc_highT = []
-        rel_bias_bbc_T_D = []
-        rel_bias_shuffling = []
-        rel_bias_shuffling_lowT = []
-        rel_bias_shuffling_mediumT = []
-        rel_bias_shuffling_highT = []
-        rel_bias_shuffling_T_D = []
+        rel_deviation_R_tot = []
+        # rel_bias_bbc = []
+        # rel_bias_bbc_lowT = []
+        # rel_bias_bbc_mediumT = []
+        # rel_bias_bbc_highT = []
+        # rel_bias_bbc_T_D = []
+        # rel_bias_shuffling = []
+        # rel_bias_shuffling_lowT = []
+        # rel_bias_shuffling_mediumT = []
+        # rel_bias_shuffling_highT = []
+        # rel_bias_shuffling_T_D = []
         number_samples = 30
         if rec_length == '45min':
             number_samples = 10
         if rec_length == '90min':
             number_samples = 10
-        for sample_index in range(number_samples):
+        for sample_index in np.arange(1, number_samples):
             analysis_num_str = glm.load_embedding_parameters(
                 rec_length, sample_index, analysis_settings)[1]
             # Embedding optimized estimates and confidence intervals
             hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
                 ANALYSIS_DIR, analysis_num_str)
             hisdep_pd = pd.read_csv(hisdep_csv_file_name)
-            R_bbc = np.array(hisdep_pd['max_R_bbc'])
-            R_shuffling = np.array(hisdep_pd['max_R_shuffling'])
+            R = np.array(hisdep_pd['max_R_{}'.format(regularization_method)])
+            R_CI_lo = np.array(hisdep_pd['max_R_{}_CI_lo'.format(regularization_method)])
             T = np.array(hisdep_pd['#T'])
-            T_D, R_tot_bbc, R_tot_std, T_D_index_bbc, max_valid_index_bbc = plots.get_temporal_depth_and_R_tot(T, R_bbc)
-            T_D, R_tot_shuffling, R_tot_std, T_D_index_shuffling, max_valid_index_shuffling = plots.get_temporal_depth_and_R_tot(T, R_shuffling)
+            R_tot, T_D_index, max_valid_index = plots.get_R_tot(T, R, R_CI_lo)
+
+            # Embedding optimized estimates and confidence intervals
+            # hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
+            #     ANALYSIS_DIR, analysis_num_str)
+            # hisdep_pd = pd.read_csv(hisdep_csv_file_name)
+            # R_bbc = np.array(hisdep_pd['max_R_bbc'])
+            # R_shuffling = np.array(hisdep_pd['max_R_shuffling'])
+            # T = np.array(hisdep_pd['#T'])
+            # T_D, R_tot_bbc, R_tot_std, T_D_index_bbc, max_valid_index_bbc = plots.get_temporal_depth_and_R_tot(T, R_bbc)
+            # T_D, R_tot_shuffling, R_tot_std, T_D_index_shuffling, max_valid_index_shuffling = plots.get_temporal_depth_and_R_tot(T, R_shuffling)
 
             # Temporal depth and total history dependence
-            statistics_csv_file_name = '{}/ANALYSIS{}/statistics.csv'.format(
-                ANALYSIS_DIR, analysis_num_str)
-            statistics_pd = pd.read_csv(statistics_csv_file_name)
+            # statistics_csv_file_name = '{}/ANALYSIS{}/statistics.csv'.format(
+            #     ANALYSIS_DIR, analysis_num_str)
+            # statistics_pd = pd.read_csv(statistics_csv_file_name)
 
-            glm_bbc_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_bbc.csv'.format(
-                ANALYSIS_DIR, analysis_num_str)
-            glm_bbc_pd = pd.read_csv(glm_bbc_csv_file_name)
-            T = np.array(glm_bbc_pd['T'])
-            R_glm_bbc = np.array(glm_bbc_pd['R_GLM'])
-            T_D_index = np.where(np.array(hisdep_pd['#T'])==T[0])[0][0]
-            max_valid_index = np.where(np.array(hisdep_pd['#T'])==T[-1])[0][0]+1
-            R_bbc = R_bbc[T_D_index:max_valid_index]
+            glm_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_{}.csv'.format(
+                ANALYSIS_DIR, analysis_num_str, regularization_method)
+            glm_pd = pd.read_csv(glm_csv_file_name)
+            T_glm = np.array(glm_pd['T'])
+            R_glm = np.array(glm_pd['R_GLM'])
+            # Make sure that you only average R_GLM over the right T
+            if T_glm[0]>T[T_D_index]:
+                print(setup, rec_length, sample_index)
+            else:
+                T_D_index_glm = np.where(T_glm == T[T_D_index])[0][0]
+                max_valid_index_glm = np.where(T_glm == T[max_valid_index-1])[0][0]+1
+                R_tot_glm = np.mean(R_glm[T_D_index_glm:max_valid_index_glm])
+                # T_D_index = np.where(np.array(hisdep_pd['#T'])==T[0])[0][0]
+                # max_valid_index = np.where(np.array(hisdep_pd['#T'])==T[-1])[0][0]+1
+                # R_bbc = R_bbc[T_D_index:max_valid_index]
 
+                # TODO: Recompute T based on T in glm benchmark file to load R_tot_glm_bbc
+                # R_tot_bbc = statistics_pd['R_tot_bbc'][0]
+                # T_D_bbc = statistics_pd['T_D_bbc'][0]
+                # T_index = np.where(T == T_D_bbc)[0][0]
+                # R_tot_glm_bbc = R_glm_bbc[T_index]
 
-            # TODO: Recompute T based on T in glm benchmark file to load R_tot_glm_bbc
-            # R_tot_bbc = statistics_pd['R_tot_bbc'][0]
-            # T_D_bbc = statistics_pd['T_D_bbc'][0]
-            # T_index = np.where(T == T_D_bbc)[0][0]
-            # R_tot_glm_bbc = R_glm_bbc[T_index]
+                # glm_shuffling_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_shuffling.csv'.format(
+                #     ANALYSIS_DIR, analysis_num_str)
+                # glm_shuffling_pd = pd.read_csv(glm_shuffling_csv_file_name)
+                # T = np.array(glm_shuffling_pd['T'])
+                # R_glm_shuffling = np.array(glm_shuffling_pd['R_GLM'])
+                # T_D_index = np.where(np.array(hisdep_pd['#T'])==T[0])[0][0]
+                # max_valid_index = np.where(np.array(hisdep_pd['#T'])==T[-1])[0][0]+1
+                # R_shuffling = R_shuffling[T_D_index:max_valid_index]
 
-            glm_shuffling_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_shuffling.csv'.format(
-                ANALYSIS_DIR, analysis_num_str)
-            glm_shuffling_pd = pd.read_csv(glm_shuffling_csv_file_name)
-            T = np.array(glm_shuffling_pd['T'])
-            R_glm_shuffling = np.array(glm_shuffling_pd['R_GLM'])
-            T_D_index = np.where(np.array(hisdep_pd['#T'])==T[0])[0][0]
-            max_valid_index = np.where(np.array(hisdep_pd['#T'])==T[-1])[0][0]+1
-            R_shuffling = R_shuffling[T_D_index:max_valid_index]
+                #
+                # R_tot_shuffling = statistics_pd['R_tot_shuffling'][0]
+                # T_D_shuffling = statistics_pd['T_D_shuffling'][0]
+                # T_index = np.where(T == T_D_shuffling)[0][0]
+                # R_tot_glm_shuffling = R_glm_shuffling[T_index]
 
-            #
-            # R_tot_shuffling = statistics_pd['R_tot_shuffling'][0]
-            # T_D_shuffling = statistics_pd['T_D_shuffling'][0]
-            # T_index = np.where(T == T_D_shuffling)[0][0]
-            # R_tot_glm_shuffling = R_glm_shuffling[T_index]
-
-            # rel_bias_bbc += [100 * (R_bbc - R_glm_bbc) / R_glm_bbc]
-            # rel_bias_shuffling += [100 * (R_shuffling -
-            #                               R_glm_shuffling) / R_glm_shuffling]
-            # rel_bias_bbc_lowT += [100 *
-            #                       (R_bbc[10] - R_glm_bbc[10]) / R_glm_bbc[10]]
-            # rel_bias_bbc_mediumT += [100 *
-            #                          (R_bbc[30] - R_glm_bbc[30]) / R_glm_bbc[30]]
-            # rel_bias_bbc_highT += [100 *
-            #                        (R_bbc[50] - R_glm_bbc[50]) / R_glm_bbc[50]]
-            # rel_bias_bbc_T_D += [100 *
-            #                      (R_tot_bbc - R_tot_glm_bbc) / R_tot_glm_bbc]
-            rel_bias_bbc_T_D += [100 *
-                                 np.mean(R_bbc - R_glm_bbc) / R_tot_bbc]
-            # rel_bias_shuffling_lowT += [
-            #     100 * (R_shuffling[10] - R_glm_shuffling[10]) / R_glm_shuffling[10]]
-            # rel_bias_shuffling_mediumT += [
-            #     100 * (R_shuffling[30] - R_glm_shuffling[30]) / R_glm_shuffling[30]]
-            # rel_bias_shuffling_highT += [
-            #     100 * (R_shuffling[50] - R_glm_shuffling[50]) / R_glm_shuffling[50]]
+                # rel_bias_bbc += [100 * (R_bbc - R_glm_bbc) / R_glm_bbc]
+                # rel_bias_shuffling += [100 * (R_shuffling -
+                #                               R_glm_shuffling) / R_glm_shuffling]
+                # rel_bias_bbc_lowT += [100 *
+                #                       (R_bbc[10] - R_glm_bbc[10]) / R_glm_bbc[10]]
+                # rel_bias_bbc_mediumT += [100 *
+                #                          (R_bbc[30] - R_glm_bbc[30]) / R_glm_bbc[30]]
+                # rel_bias_bbc_highT += [100 *
+                #                        (R_bbc[50] - R_glm_bbc[50]) / R_glm_bbc[50]]
+                # rel_bias_bbc_T_D += [100 *
+                #                      (R_tot_bbc - R_tot_glm_bbc) / R_tot_glm_bbc]
+                # rel_bias_bbc_T_D += [100 *
+                #                      np.mean(R_bbc - R_glm_bbc) / R_tot_bbc]
+                rel_deviation_R_tot += [100* (R_tot-R_tot_glm)/R_tot_glm]
+                # rel_bias_shuffling_lowT += [
+                #     100 * (R_shuffling[10] - R_glm_shuffling[10]) / R_glm_shuffling[10]]
+                # rel_bias_shuffling_mediumT += [
+                #     100 * (R_shuffling[30] - R_glm_shuffling[30]) / R_glm_shuffling[30]]
+                # rel_bias_shuffling_highT += [
+                #     100 * (R_shuffling[50] - R_glm_shuffling[50]) / R_glm_shuffling[50]]
 
 
             # rel_bias_shuffling_T_D += [100 *
             #                            (R_tot_shuffling - R_tot_glm_shuffling) / R_tot_glm_shuffling]
-            rel_bias_shuffling_T_D += [100 *
-                                       np.mean(R_shuffling - R_glm_shuffling) / R_tot_shuffling]
-
+            # rel_bias_shuffling_T_D += [100 *
+            #                            np.mean(R_shuffling - R_glm_shuffling) / R_tot_shuffling]
 
         # median_rel_bias_lowT['bbc-{}-{}'.format(setup, rec_length)
         #                      ] = np.median(rel_bias_bbc_lowT)
@@ -200,22 +219,21 @@ for setup in setups:
         #                       ] = np.median(rel_bias_shuffling_highT)
         # median_CI_rel_bias_highT['shuffling-{}-{}'.format(setup, rec_length)
         #                          ] = plots.get_CI_median(rel_bias_shuffling_highT)
-        median_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
-                            ] = np.median(rel_bias_bbc_T_D)
-        median_CI_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
-                               ] = plots.get_CI_median(rel_bias_bbc_T_D)
-        median_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
-                            ] = np.median(rel_bias_shuffling_T_D)
-        median_CI_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
-                               ] = plots.get_CI_median(rel_bias_shuffling_T_D)
-        mean_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
-                          ] = np.mean(rel_bias_bbc_T_D)
-        mean_CI_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
-                             ] = plots.get_CI_mean(rel_bias_bbc_T_D)
-        mean_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
-                          ] = np.mean(rel_bias_shuffling_T_D)
-        mean_CI_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
-                             ] = plots.get_CI_mean(rel_bias_shuffling_T_D)
+        # median_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
+        #                     ] = np.median(rel_bias_bbc_T_D)
+        # median_CI_rel_bias_T_D['bbc-{}-{}'.format(setup, rec_length)
+        #                        ] = plots.get_CI_median(rel_bias_bbc_T_D)
+        # median_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
+        #                     ] = np.median(rel_bias_shuffling_T_D)
+        # median_CI_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
+        #                        ] = plots.get_CI_median(rel_bias_shuffling_T_D)
+        mean_rel_deviation_R_tot['{}-{}'.format(setup, rec_length)
+                          ] = np.mean(rel_deviation_R_tot)
+        mean_CI_rel_deviation_R_tot['{}-{}'.format(setup, rec_length)] = plots.get_CI_mean(rel_deviation_R_tot)
+        # mean_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
+        #                   ] = np.mean(rel_bias_shuffling_T_D)
+        # mean_CI_rel_bias_T_D['shuffling-{}-{}'.format(setup, rec_length)
+        #                      ] = plots.get_CI_mean(rel_bias_shuffling_T_D)
 
         # mean_rel_bias['shuffling-{}-{}'.format(setup, rec_length)] = np.median(
         #     rel_bias_shuffling)
@@ -231,10 +249,11 @@ for setup in setups:
 """Plotting"""
 fig, (axes) = plt.subplots(2, 2, figsize=(10, 6))
 # fig.set_size_inches(4, 3)
-for j, setup in enumerate(setups):
-    for k, regularization in enumerate(['bbc', 'shuffling']):
+for j in range(2):
+    for k in range(2):
+        setup = setups[k][j]
         ax = axes[k][j]
-
+        regularization_method = setup.split("_")[1]
         # plot settings
         # ax.set_xlabel(r'past range $T$ [sec]')
         # ax.set_xscale('log')
@@ -269,35 +288,35 @@ for j, setup in enumerate(setups):
         ax.spines['top'].set_bounds(0, 0)
         ax.spines['right'].set_bounds(0, 0)
         # only plot labels and legend for left-hand side
-        if setup == 'full':
+        if not setup.split('_')[-1] == 'withCV':
             # ax.set_xlabel(r'past range $T$ [sec]')
-            ax.set_ylabel(r'relative bias for $R(\hat{T}_D)$ [\%]')
-        if regularization == 'shuffling':
+            ax.set_ylabel(r'relative bias for $\hat{R}_{\mathrm{tot}}$ [\%]')
+        if regularization_method == 'shuffling':
             ax.set_xlabel(r'recording time $T_{\mathrm{rec}}$ [min]')
 
-        if setup == 'full':
+        if not setup.split('_')[-1] == 'withCV':
             ax.set_title(
-                '{}, embedding-optimized estimate'.format(regularization))
+                '{}, embedding-optimized estimate'.format(regularization_method))
         else:
-            ax.set_title('{}, cross-validation'.format(regularization))
+            ax.set_title('{}, cross-validation'.format(regularization_method))
         ax.plot(rec_length_values, np.zeros(len(rec_lengths)), color='0')
 
         # legend only for no cross-validation
         for i, rec_length in enumerate(rec_lengths):
-            median_rel_bias_T_D_val = median_rel_bias_T_D['{}-{}-{}'.format(
-                regularization, setup, rec_length)]
-            median_CI_rel_bias_T_D_val = median_CI_rel_bias_T_D['{}-{}-{}'.format(
-                regularization, setup, rec_length)]
-            median_CI_lo = median_CI_rel_bias_T_D_val[0] - \
-                median_rel_bias_T_D_val
-            median_CI_hi = median_CI_rel_bias_T_D_val[1] - \
-                median_rel_bias_T_D_val
-            mean_rel_bias_T_D_val = mean_rel_bias_T_D['{}-{}-{}'.format(
-                regularization, setup, rec_length)]
-            mean_CI_rel_bias_T_D_val = mean_CI_rel_bias_T_D['{}-{}-{}'.format(
-                regularization, setup, rec_length)]
-            mean_CI_lo = mean_CI_rel_bias_T_D_val[0] - mean_rel_bias_T_D_val
-            mean_CI_hi = mean_CI_rel_bias_T_D_val[1] - mean_rel_bias_T_D_val
+            # median_rel_bias_T_D_val = median_rel_bias_T_D['{}-{}-{}'.format(
+            #     regularization, setup, rec_length)]
+            # median_CI_rel_bias_T_D_val = median_CI_rel_bias_T_D['{}-{}-{}'.format(
+            #     regularization, setup, rec_length)]
+            # median_CI_lo = median_CI_rel_bias_T_D_val[0] - \
+            #     median_rel_bias_T_D_val
+            # median_CI_hi = median_CI_rel_bias_T_D_val[1] - \
+            #     median_rel_bias_T_D_val
+            mean_rel_deviation_R_tot_val = mean_rel_deviation_R_tot['{}-{}'.format(
+                setup, rec_length)]
+            mean_CI_rel_deviation_R_tot_val = mean_CI_rel_deviation_R_tot['{}-{}'.format(
+                setup, rec_length)]
+            mean_CI_lo = mean_CI_rel_deviation_R_tot_val[0] - mean_rel_deviation_R_tot_val
+            mean_CI_hi = mean_CI_rel_deviation_R_tot_val[1] - mean_rel_deviation_R_tot_val
             # mean_rel_bias_arr = mean_rel_bias['{}-{}-{}'.format(
             #     regularization, setup, rec_length)]
             # std_rel_bias_arr = std_rel_bias['{}-{}-{}'.format(
@@ -308,9 +327,9 @@ for j, setup in enumerate(setups):
             #             regularization, rec_length)],
             #         label=rec_length,
             #         zorder=4)
-            ax.errorbar(x=[rec_length_values[i]], y=[mean_rel_bias_T_D_val], yerr=[[-mean_CI_lo], [mean_CI_hi]],
+            ax.errorbar(x=[rec_length_values[i]], y=[mean_rel_deviation_R_tot_val], yerr=[[-mean_CI_lo], [mean_CI_hi]],
                         color=rec_length_colors['{}-45min'.format(
-                            regularization)], marker='d', markersize=5.)
+                            regularization_method)], marker='d', markersize=5.)
             # ax.fill_between(T, mean_rel_bias_arr - std_rel_bias_arr,
             #                 mean_rel_bias_arr + std_rel_bias_arr,
             #                 facecolor=rec_length_colors['{}-{}'.format(
@@ -330,6 +349,7 @@ for j, setup in enumerate(setups):
 # ax.text(T_D_shuffling + 0.15 * Tm_eff, .101, r'$\hat{T}_D$')
 
 fig.tight_layout(pad=1.0, w_pad=1.0, h_pad=1.0)
+
 plt.savefig('{}/Rtot_bias_vs_Trec_comparison.pdf'.format(PLOTTING_DIR),
             format="pdf", bbox_inches='tight')
 plt.show()

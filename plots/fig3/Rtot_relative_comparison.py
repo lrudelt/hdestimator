@@ -181,7 +181,7 @@ ax.spines['right'].set_visible(False)
 ax.spines['bottom'].set_visible(False)
 
 ax.set_ylabel(
-    r'\begin{center} total history dependence $\hat{R}_{\mathrm{tot}}$ \\ relative to BBC \end{center}')
+    r'\begin{center} total history dependence \\ $\hat{R}_{\mathrm{tot}}$ relative to BBC \end{center}')
 ax.set_ylim((0.55, 1.1))
 ax.set_yticks([0.6, 0.8, 1.0])
 ax.spines['left'].set_bounds(.55, 1.)
@@ -328,8 +328,8 @@ ax2.bar(x=[7.0], height=[R_tot_fivebins_Culture_median], yerr=[[R_tot_fivebins_C
 ax2.bar(x=[7.5], height=[R_tot_onebin_Culture_median], yerr=[[R_tot_onebin_Culture_median-R_tot_onebin_Culture_median_loCI], [R_tot_onebin_Culture_median_hiCI-R_tot_onebin_Culture_median]], width=.5, alpha=.95,color='y', ecolor="0.3", label="single bin")
 ax2.bar(x=[8.0], height=[R_tot_glm_Culture_median], yerr=[[R_tot_glm_Culture_median-R_tot_glm_Culture_median_loCI], [R_tot_glm_Culture_median_hiCI-R_tot_glm_Culture_median]], width=.5, alpha=.95,color=violet, ecolor="0.3", label='GLM')
 
-# plt.savefig('{}/Rtot_relative_comparison.pdf'.format(PLOTTING_DIR),
-#             format="pdf", bbox_inches='tight')
+plt.savefig('{}/Rtot_relative_comparison.pdf'.format(PLOTTING_DIR),
+            format="pdf", bbox_inches='tight')
 
 plt.show()
 plt.close()

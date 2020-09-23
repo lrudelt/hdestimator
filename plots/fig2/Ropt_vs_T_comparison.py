@@ -31,21 +31,11 @@ if 'hde_glm' not in modules:
     import hde_utils as utl
     import hde_plotutils as plots
 
-sample_index = 0
+recorded_system = 'Simulation'
 rec_length = '90min'
-setup = 'full'
+sample_index = 0
 
-"""Settings"""
-# Load settings from yaml file
-with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
-    analysis_settings = yaml.load(
-        analysis_settings_file, Loader=yaml.BaseLoader)
-
-ANALYSIS_DIR = analysis_settings['ANALYSIS_DIR']
-analysis_num_str = glm.load_embedding_parameters(
-    rec_length, sample_index, analysis_settings)[1]
-
-"""Load data """
+"""Load old data """
 
 # These you should use for now, but they should be updated for publication!
 ana_data_path = '/home/lucas/research/projects/history_dependence/analysis/Data/Simulated/analysis_Data'
@@ -65,45 +55,41 @@ T_old = np.delete(T_old, (23, 34, 42))
 R_GLM_BIC = np.delete(np.loadtxt(
     '%s/M_GLM_max.dat' % ana_data_path), (23, 34, 42))
 
-# Embedding optimized estimates and confidence intervals
-hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
-    ANALYSIS_DIR, analysis_num_str)
-hisdep_pd = pd.read_csv(hisdep_csv_file_name)
+"""Load data """
+# Load settings from yaml file
+setup = 'full_bbc'
+with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
+    analysis_settings = yaml.load(
+        analysis_settings_file, Loader=yaml.BaseLoader)
 
-T = np.array(hisdep_pd['#T'])
+ANALYSIS_DIR, analysis_num_str, R_tot_bbc, T_D_bbc, T, R_bbc, R_bbc_CI_lo, R_bbc_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, sample_index, setup, ESTIMATOR_DIR, regularization_method = 'bbc')
 
-R_bbc = np.array(hisdep_pd['max_R_bbc'])
-R_bbc_CI_lo = np.array(hisdep_pd['max_R_bbc_CI_lo'])
-R_bbc_CI_hi = np.array(hisdep_pd['max_R_bbc_CI_hi'])
-
-R_shuffling = np.array(hisdep_pd['max_R_shuffling'])
-R_shuffling_CI_lo = np.array(hisdep_pd['max_R_shuffling_CI_lo'])
-R_shuffling_CI_hi = np.array(hisdep_pd['max_R_shuffling_CI_hi'])
+R_tot_bbc, T_D_index_bbc, max_valid_index_bbc = plots.get_R_tot(T, R_bbc, R_bbc_CI_lo)
 
 glm_bbc_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_bbc.csv'.format(
     ANALYSIS_DIR, analysis_num_str)
 glm_bbc_pd = pd.read_csv(glm_bbc_csv_file_name)
 R_glm_bbc = np.array(glm_bbc_pd['R_GLM'])
 
+setup = 'full_shuffling'
+with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
+    analysis_settings = yaml.load(
+        analysis_settings_file, Loader=yaml.BaseLoader)
+
+ANALYSIS_DIR = analysis_settings['ANALYSIS_DIR']
+analysis_num_str = glm.load_embedding_parameters(
+    rec_length, sample_index, analysis_settings)[1]
+
+R_tot_shuffling, T_D_shuffling, T, R_shuffling, R_shuffling_CI_lo, R_shuffling_CI_hi = plots.load_analysis_results(
+    recorded_system, rec_length, sample_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+
+R_tot_shuffling, T_D_index_shuffling, max_valid_index_shuffling = plots.get_R_tot(T, R_shuffling, R_shuffling_CI_lo)
+
 glm_shuffling_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_shuffling.csv'.format(
     ANALYSIS_DIR, analysis_num_str)
 glm_shuffling_pd = pd.read_csv(glm_shuffling_csv_file_name)
 R_glm_shuffling = np.array(glm_shuffling_pd['R_GLM'])
-
-# Temporal depth and total history dependence
-statistics_csv_file_name = '{}/ANALYSIS{}/statistics.csv'.format(
-    ANALYSIS_DIR, analysis_num_str)
-statistics_pd = pd.read_csv(statistics_csv_file_name)
-
-R_tot_bbc = statistics_pd['R_tot_bbc'][0]
-T_D_bbc = statistics_pd['T_D_bbc'][0]
-T_D_bbc_new, R_tot_bbc_new, R_tot_std_bbc_new, T_D_index_bbc, max_valid_index_bbc = plots.get_temporal_depth_and_R_tot(T, R_bbc)
-
-R_tot_shuffling = statistics_pd['R_tot_shuffling'][0]
-T_D_shuffling = statistics_pd['T_D_shuffling'][0]
-T_D_shuffling_new, R_tot_shuffling_new, R_tot_std_shuffling_new, T_D_index_shuffling, max_valid_index_shuffling = plots.get_temporal_depth_and_R_tot(T, R_shuffling)
-
-bbc_tolerance = statistics_pd['bbc_tolerance'][0]
 
 """Plotting"""
 rc('text', usetex=True)
@@ -151,10 +137,10 @@ ax.plot([T[0], T[-1]], [R_max, R_max], '--', color='0.5', zorder=1)
 ax.plot(T_old, R_GLM_BIC, color='.5', zorder=3)
 
 # GLM for same embeddings as comparison
-# ax.plot(T, R_glm_bbc, '-.', color='.4', alpha=0.8,
-#         zorder=3, label='true $R(T)$ (BBC)')  # , label='Model'
-# ax.plot(T, R_glm_shuffling, ':', color='.4',
-#         lw=1.8, alpha=0.8, zorder=2, label=r'true $R(T)$ (Shuffling)')
+ax.plot(T, R_glm_bbc, '-.', color='.4', alpha=0.8,
+        zorder=3, label='true $R(T)$ (BBC)')  # , label='Model'
+ax.plot(T, R_glm_shuffling, ':', color='.4',
+        lw=1.8, alpha=0.8, zorder=2, label=r'true $R(T)$ (Shuffling)')
 
 # Embedding optimized estimates and confidence intervals
 ax.plot(T, R_bbc, linewidth=1.2,  color=main_red, zorder=4)
@@ -163,8 +149,8 @@ ax.plot(T, R_shuffling, linewidth=1.2, color=main_blue, zorder=3)
 ax.fill_between(T, R_shuffling_CI_lo, R_shuffling_CI_hi,
                 facecolor=main_blue, alpha=0.3)
 
-ax.plot(T[T_D_index_bbc:max_valid_index_bbc], np.zeros(max_valid_index_bbc-T_D_index_bbc)+R_tot_bbc_new, color = '0.2',linestyle='--')
-ax.plot(T[T_D_index_shuffling:max_valid_index_shuffling], np.zeros(max_valid_index_shuffling-T_D_index_shuffling)+R_tot_shuffling_new, color = '0.2',linestyle='--')
+ax.plot(T[T_D_index_bbc:max_valid_index_bbc], np.zeros(max_valid_index_bbc-T_D_index_bbc)+R_tot_bbc, color = main_red,linestyle='--')
+ax.plot(T[T_D_index_shuffling:max_valid_index_shuffling], np.zeros(max_valid_index_shuffling-T_D_index_shuffling)+R_tot_shuffling, color = main_blue,linestyle='--')
 
 
 # Rtot and Tdepth bbc
@@ -200,10 +186,7 @@ ax.plot([T_D_shuffling], [R_tot_shuffling], marker='x', markersize=6, color=main
 ax.legend(loc=(.05, .83), frameon=False)
 
 fig.tight_layout(pad=1.0, w_pad=1.0, h_pad=1.0)
-# fig.savefig("Subsampling_fixed_Cat.pdf")
-# plt.savefig('{}/Ropt_vs_T_comparison.pdf'.format(PLOTTING_DIR),
-#             format="pdf", bbox_inches='tight')
-# plt.savefig('../Mopt_vs_Tm_model_comparison.png',
-#             format="png", dpi=300, bbox_inches='tight')
+plt.savefig('{}/Ropt_vs_T_comparison.pdf'.format(PLOTTING_DIR),
+            format="pdf", bbox_inches='tight')
 plt.show()
 plt.close()
