@@ -48,23 +48,8 @@ matplotlib.rcParams['ytick.labelsize'] = '15'
 matplotlib.rcParams['legend.fontsize'] = '15'
 matplotlib.rcParams['axes.linewidth'] = 0.6
 
-
-# Colors
-rec_length_colors = {'bbc-1min': sns.color_palette("RdBu_r", 16)[9],
-                     'bbc-3min': sns.color_palette("RdBu_r", 16)[10],
-                     'bbc-5min': sns.color_palette("RdBu_r", 16)[11],
-                     'bbc-10min': sns.color_palette("RdBu_r", 16)[12],
-                     'bbc-20min': sns.color_palette("RdBu_r", 16)[13],
-                     'bbc-45min': sns.color_palette("RdBu_r", 16)[14],
-                     'bbc-90min': sns.color_palette("RdBu_r", 16)[15],
-                     'shuffling-1min': sns.color_palette("RdBu_r", 16)[6],
-                     'shuffling-3min': sns.color_palette("RdBu_r", 16)[5],
-                     'shuffling-5min': sns.color_palette("RdBu_r", 16)[4],
-                     'shuffling-10min': sns.color_palette("RdBu_r", 16)[3],
-                     'shuffling-20min': sns.color_palette("RdBu_r", 16)[2],
-                     'shuffling-45min': sns.color_palette("RdBu_r", 16)[1],
-                     'shuffling-90min': sns.color_palette("RdBu_r", 16)[0]}
-
+main_red = sns.color_palette("RdBu_r", 15)[12]
+main_blue = sns.color_palette("RdBu_r", 15)[1]
 
 """Load data for all plots"""
 mean_R_tot = {}
@@ -74,7 +59,6 @@ mean_T_D = {}
 mean_CI_T_D = {}
 
 setup = 'full_shuffling'
-# Load settings from yaml file
 with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
     analysis_settings = yaml.load(
         analysis_settings_file, Loader=yaml.BaseLoader)
@@ -90,34 +74,11 @@ for rec_length in rec_lengths:
     if rec_length == '90min':
         number_samples = 10
     for sample_index in np.arange(1, number_samples):
-        analysis_num_str = glm.load_embedding_parameters(
-            rec_length, sample_index, analysis_settings)[1]
-        # Embedding optimized estimates and confidence intervals
-        hisdep_csv_file_name = '{}/ANALYSIS{}/histdep_data.csv'.format(
-            ANALYSIS_DIR, analysis_num_str)
-        hisdep_pd = pd.read_csv(hisdep_csv_file_name)
-        R = np.array(hisdep_pd['max_R_{}'.format(regularization_method)])
-        R_CI_lo = np.array(hisdep_pd['max_R_{}_CI_lo'.format(regularization_method)])
-        T = np.array(hisdep_pd['#T'])
-        R_tot, T_D, T, R, R_CI_lo, R_CI_hi = plots.load_analysis_results(
-            recorded_system, rec_length, sample_index, setup, ESTIMATOR_DIR, regularization_method = 'shuffling')
+        ANALYSIS_DIR, analysis_num_str, R_tot, T_D, T, R, R_CI_lo, R_CI_hi = plots.load_analysis_results(
+            recorded_system, rec_length, sample_index, setup, ESTIMATOR_DIR, regularization_method = regularization_method)
         R_tot, T_D_index, max_valid_index = plots.get_R_tot(T, R, R_CI_lo)
         R_tot_arr += [R_tot]
         T_D_arr += [T_D]
-        # glm_csv_file_name = '{}/ANALYSIS{}/glm_benchmark_{}.csv'.format(
-        #     ANALYSIS_DIR, analysis_num_str, regularization_method)
-        # glm_pd = pd.read_csv(glm_csv_file_name)
-        # T_glm = np.array(glm_pd['T'])
-        # R_glm = np.array(glm_pd['R_GLM'])
-        # Make sure that you only average R_GLM over the right T
-        # if T_glm[0]>T[T_D_index]:
-        #     print(setup, rec_length, sample_index)
-        # else:
-        #     T_D_index_glm = np.where(T_glm == T[T_D_index])[0][0]
-        #     max_valid_index_glm = np.where(T_glm == T[max_valid_index-1])[0][0]+1
-        #     R_tot_glm = np.mean(R_glm[T_D_index_glm:max_valid_index_glm])
-
-
     mean_R_tot['{}-{}'.format(setup, rec_length)] = np.mean(R_tot_arr)
     mean_CI_R_tot['{}-{}'.format(setup, rec_length)] = plots.get_CI_mean(R_tot_arr)
     mean_T_D['{}-{}'.format(setup, rec_length)] = np.mean(T_D_arr)
@@ -130,9 +91,39 @@ for rec_length in rec_lengths:
     mean_CI_T_D['{}-{}'.format(setup, rec_length)] = mean_CI_T_D['{}-{}'.format(setup, rec_length)]/mean_T_D['{}-{}'.format(setup, '90min')]*100
 
 
+setup = 'full_bbc'
+with open('{}/settings/Simulation_{}.yaml'.format(ESTIMATOR_DIR, setup), 'r') as analysis_settings_file:
+    analysis_settings = yaml.load(
+        analysis_settings_file, Loader=yaml.BaseLoader)
+ANALYSIS_DIR = analysis_settings['ANALYSIS_DIR']
+regularization_method = setup.split("_")[1]
+for rec_length in rec_lengths:
+    R_tot_arr = []
+    T_D_arr = []
+    number_samples = 30
+    if rec_length == '45min':
+        number_samples = 10
+    if rec_length == '90min':
+        number_samples = 10
+    for sample_index in np.arange(1, number_samples):
+        ANALYSIS_DIR, analysis_num_str, R_tot, T_D, T, R, R_CI_lo, R_CI_hi = plots.load_analysis_results(
+            recorded_system, rec_length, sample_index, setup, ESTIMATOR_DIR, regularization_method = regularization_method)
+        R_tot, T_D_index, max_valid_index = plots.get_R_tot(T, R, R_CI_lo)
+        R_tot_arr += [R_tot]
+        T_D_arr += [T_D]
+    mean_R_tot['{}-{}'.format(setup, rec_length)] = np.mean(R_tot_arr)
+    mean_CI_R_tot['{}-{}'.format(setup, rec_length)] = plots.get_CI_mean(R_tot_arr)
+    mean_T_D['{}-{}'.format(setup, rec_length)] = np.mean(T_D_arr)
+    mean_CI_T_D['{}-{}'.format(setup, rec_length)] = plots.get_CI_mean(T_D_arr)
+
+for rec_length in rec_lengths:
+    mean_R_tot['{}-{}'.format(setup, rec_length)] = mean_R_tot['{}-{}'.format(setup, rec_length)]/mean_R_tot['{}-{}'.format(setup, '90min')]*100
+    mean_CI_R_tot['{}-{}'.format(setup, rec_length)] = mean_CI_R_tot['{}-{}'.format(setup, rec_length)]/mean_R_tot['{}-{}'.format(setup, '90min')]*100
+    mean_T_D['{}-{}'.format(setup, rec_length)] = mean_T_D['{}-{}'.format(setup, rec_length)]/mean_T_D['{}-{}'.format(setup, '90min')]*100
+    mean_CI_T_D['{}-{}'.format(setup, rec_length)] = mean_CI_T_D['{}-{}'.format(setup, rec_length)]/mean_T_D['{}-{}'.format(setup, '90min')]*100
 
 """Plotting"""
-fig, (axes) = plt.subplots(1, 2, figsize=(10, 3.5))
+fig, (axes) = plt.subplots(1, 2, figsize=(10, 3.2))
 # fig.set_size_inches(4, 3)
 for j, ax in enumerate(axes):
 
@@ -166,33 +157,67 @@ for j, ax in enumerate(axes):
     else:
         ax.set_ylabel(r'\begin{center}temporal depth $\hat{T}_D$\\ relative to $90\,\mathrm{min}$ [\%]\end{center}')
 
+    setup = 'full_bbc'
     for i, rec_length in enumerate(rec_lengths):
         if j == 0:
             mean_val = mean_R_tot['{}-{}'.format(
             setup, rec_length)]
             mean_CI_val = mean_CI_R_tot['{}-{}'.format(
             setup, rec_length)]
-            ax.set_ylim((90, 100.5))
-            # ax.spines['top'].set_bounds(0, 100)
+            ax.set_ylim((0, 105.5))
+            ax.spines['left'].set_bounds(0, 100)
         else:
-            # ax.set_ylim((0, 100.5))
-            # ax.spines['top'].set_bounds(0, 100)]
-            ax.set_ylim((40, 100.5))
+            ax.set_ylim((0, 105.5))
+            ax.spines['left'].set_bounds(0, 100)
+            # ax.set_ylim((40, 100.5))
             mean_val = mean_T_D['{}-{}'.format(
             setup, rec_length)]
             mean_CI_val = mean_CI_T_D['{}-{}'.format(
             setup, rec_length)]
         mean_CI_lo = mean_CI_val[0] - mean_val
         mean_CI_hi = mean_CI_val[1] - mean_val
+        if i == 0:
+            ax.errorbar(x=[rec_length_values[i]], y=[mean_val], yerr=[[-mean_CI_lo], [mean_CI_hi]],
+                        color=main_red, marker='d', markersize=5.,capsize = 3.0, label = r'BBC, $d_{\mathrm{max}}=20$')
+        else:
+            ax.errorbar(x=[rec_length_values[i]], y=[mean_val], yerr=[[-mean_CI_lo], [mean_CI_hi]],
+                        color=main_red, marker='d', markersize=5.,capsize = 3.0)
 
-        ax.errorbar(x=[rec_length_values[i]], y=[mean_val], yerr=[[-mean_CI_lo], [mean_CI_hi]],
-                    color=rec_length_colors['{}-45min'.format(
-                        regularization_method)], marker='d', markersize=5.)
+    setup = 'full_shuffling'
+    for i, rec_length in enumerate(rec_lengths):
+        if j == 0:
+            mean_val = mean_R_tot['{}-{}'.format(
+            setup, rec_length)]
+            mean_CI_val = mean_CI_R_tot['{}-{}'.format(
+            setup, rec_length)]
+            ax.set_ylim((0, 105.5))
+            ax.spines['left'].set_bounds(0, 100)
+        else:
+            ax.set_ylim((0, 105.5))
+            ax.spines['left'].set_bounds(0, 100)
+            # ax.set_ylim((40, 100.5))
+            mean_val = mean_T_D['{}-{}'.format(
+            setup, rec_length)]
+            mean_CI_val = mean_CI_T_D['{}-{}'.format(
+            setup, rec_length)]
+        mean_CI_lo = mean_CI_val[0] - mean_val
+        mean_CI_hi = mean_CI_val[1] - mean_val
+        if i == 0:
+            ax.errorbar(x=[rec_length_values[i]], y=[mean_val], yerr=[[-mean_CI_lo], [mean_CI_hi]],
+                        color=main_blue, marker='d', markersize=5., label = r'Shuffling, $d_{\mathrm{max}}=20$')
+        else:
+            ax.errorbar(x=[rec_length_values[i]], y=[mean_val], yerr=[[-mean_CI_lo], [mean_CI_hi]],
+                        color=main_blue, marker='d', markersize=5.)
 
 
+
+    if j == 0:
+        ax.legend(loc=(0.1, 0.1), frameon=False)
+
+fig.text(0.5, 1.01, r'simulation', ha='center', va='center', fontsize = 20)
 fig.tight_layout(pad=1.0, w_pad=1.0, h_pad=1.0)
 
-plt.savefig('{}/Rtot_vs_Trec_comparison.pdf'.format(PLOTTING_DIR),
+plt.savefig('{}/Rtot_vs_Trec_comparison_simulation.pdf'.format(PLOTTING_DIR),
             format="pdf", bbox_inches='tight')
 plt.show()
 plt.close()

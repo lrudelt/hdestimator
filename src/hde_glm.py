@@ -178,6 +178,22 @@ def save_glm_estimates_R_to_CSV_Simulation(past_range, glm_estimates, glm_estima
                 {"T": past_range, "number_of_bins_d": d, "scaling_kappa": kappa, "first_bin_size": tau, "R_GLM_test": glm_estimates_test[i], "R_GLM": glm_estimates[i]})
     return EXIT_SUCCESS
 
+def save_glm_estimates_R_BIC_to_CSV_Simulation(past_range, glm_estimates, BIC, glm_settings):
+    analysis_dir = glm_settings['ANALYSIS_DIR']
+    glm_csv_file_name = '{}/glm_estimates_BIC.csv'.format(
+        analysis_dir)
+    with open(glm_csv_file_name, 'a+', newline='') as glm_csv_file:
+        writer = csv.DictWriter(glm_csv_file, fieldnames=[
+                                "T", "number_of_bins_d", "scaling_kappa", "first_bin_size","embedding_mode_optimization", "BIC", "R_GLM"])
+        for i, d in enumerate(glm_settings['embedding_number_of_bins_set']):
+            d = int(d)
+            max_first_bin_size = float(glm_settings['max_first_bin_size'])
+            embedding_mode_optimization = glm_settings['embedding_mode_optimization']
+            kappa, tau = get_embeddings_for_optimization(
+                past_range, d, max_first_bin_size)
+            writer.writerow(
+                {"T": past_range, "number_of_bins_d": d, "scaling_kappa": kappa, "first_bin_size": tau, "embedding_mode_optimization": embedding_mode_optimization, "BIC": BIC[i], "R_GLM": glm_estimates[i]})
+    return EXIT_SUCCESS
 
 def save_glm_estimates_R_to_CSV_Experiments(past_range, opt_embedding_parameters, glm_estimates, BIC, glm_settings, analysis_num_str):
     analysis_dir = glm_settings['ANALYSIS_DIR']
@@ -256,7 +272,43 @@ def compute_benchmark_R(embedding_parameters, spiketimes, counts, glm_settings, 
 
     return R_GLM
 
-# Compute estimates of R as well as on a test data set for given past range and a set of embedding dimensions d
+# Compute GLM estimates of R and BIC for set for given past ranges T and a set of embedding dimensions d
+def compute_estimates_R_BIC_Simulation(past_range, spiketimes, counts, glm_settings):
+    # Load embedding parameters for optimization
+    t_bin = float(glm_settings['embedding_step_size'])
+    embedding_mode = glm_settings['embedding_mode_optimization']
+    embedding_number_of_bins_set = np.array(
+        glm_settings['embedding_number_of_bins_set']).astype(int)
+    max_first_bin_size = float(glm_settings['max_first_bin_size'])
+    # Number of total data points
+    N = len(counts)
+    # Number of training data points and indices for training data set
+    N_training = int(N / 3)  # train on one third of the data
+    np.random.seed(42)
+    training_indices = np.random.choice(N, N_training, replace=False)
+    counts_training = counts[training_indices]
+    R_GLM = []
+    BIC = []
+    for d in embedding_number_of_bins_set:
+        # get remaining embedding parameters such that the embedding has a certain minimum resolution (set by max_first_bin_size)
+        kappa, tau = get_embeddings_for_optimization(
+            past_range, d, max_first_bin_size)
+        # apply past embedding
+        past = past_activity(spiketimes, d, kappa, tau,
+                             t_bin, N, embedding_mode)
+        past_training = downsample_past_activity(
+            past, training_indices, N, d)
+        # Fit GLM parameters on smaller training set
+        mu, h = fit_GLM_params(
+            counts_training, past_training, d, N_training)
+        # Fit GLM parameters on the whole data set
+        # mu, h = fit_GLM_params(counts, past, d, N)
+        # # estimate history dependence for fitted GLM parameters
+        # Evaluate GLM estimate of R for fitted GLM parameters on the whole data set
+        R_GLM += [compute_R_GLM(counts, past, d, N, mu, h)]
+        # Compute BIC for fitted GLM parameters on whole data set
+        BIC += [compute_BIC_GLM(counts, past, d, N, mu, h)]
+    return R_GLM, BIC
 
 
 def compute_estimates_R_cross_validation_new(past_range, spiketimes, counts_total, glm_settings):
@@ -357,7 +409,7 @@ def compute_estimates_R_cross_validation(past_range, spiketimes, counts_total, g
 # Compute estimates of R and the Bayesian information criterion (BIC) for given past range and a set of embedding dimensions d
 
 
-def compute_estimates_R_BIC(past_range, opt_embedding_parameters, spiketimes, counts, glm_settings):
+def compute_estimates_R_BIC_Experiments(past_range, opt_embedding_parameters, spiketimes, counts, glm_settings):
     # Load embedding parameters for optimization
     t_bin = float(glm_settings['embedding_step_size'])
     embedding_mode = glm_settings['embedding_mode_optimization']

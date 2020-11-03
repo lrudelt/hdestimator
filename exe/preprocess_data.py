@@ -75,7 +75,6 @@ def preprocessStringerNeuropixelsData(data_path, output_path):
     # Save dictionary of valid neurons used for the analysis
     np.save('{}validNeuronsAreas.npy'.format(saveDataDir), validNeuronsAreas)
 
-
 # def preprocessRetinaData(data_path, output_path):
 
 #
@@ -139,6 +138,28 @@ def preprocessStringerNeuropixelsData(data_path, output_path):
 # spiketimes_analyzed = sptimes[analyzed_neuron - 1].flatten()
 
 # def preprocessCultureData(data_path, output_path):
+	# sample_rate=24.03846169
+	# spiketimes1=np.loadtxt("L_Prg035_txt_nounstim.txt")
+	# spiketimes2=np.loadtxt("L_Prg036_txt_nounstim.txt")
+	# spiketimes3=np.loadtxt("L_Prg037_txt_nounstim.txt")
+	# spiketimes4=np.loadtxt("L_Prg038_txt_nounstim.txt")
+	# spiketimes5=np.loadtxt("L_Prg039_txt_nounstim.txt")
+	#
+	# spiketimes=np.append(spiketimes1,spiketimes2,axis=0)
+	# spiketimes=np.append(spiketimes,spiketimes3,axis=0)
+	# spiketimes=np.append(spiketimes,spiketimes4,axis=0)
+	# spiketimes=np.append(spiketimes,spiketimes5,axis=0)
+	#
+	# times=spiketimes.transpose()[0]
+	# neurons=spiketimes.transpose()[1]
+	# times=times/sample_rate/1000
+	# print times
+	#
+	# for i in np.arange(1,61):
+	# 	spiketimes_neuron=times[np.where(neurons==i)[0]]
+	# 	print i,len(spiketimes_neuron)
+	# 	np.savetxt('spiketimes_neuron'+str(i)+'.dat',spiketimes_neuron)
+
 
 recorded_system = argv[1]
 data_path = argv[2]

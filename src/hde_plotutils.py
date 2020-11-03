@@ -41,6 +41,22 @@ def load_analysis_results_glm(ANALYSIS_DIR, analysis_num_str):
     R_tot_glm = glm_pd['R_GLM'][index]
     return R_tot_glm
 
+def load_analysis_results_glm_Simulation(ESTIMATOR_DIR):
+    with open('{}/settings/Simulation_glm.yaml'.format(ESTIMATOR_DIR), 'r') as glm_settings_file:
+        glm_settings = yaml.load(
+            glm_settings_file, Loader=yaml.BaseLoader)
+    ANALYSIS_DIR = glm_settings["ANALYSIS_DIR"]
+    glm_csv_file_name = '{}/glm_estimates_BIC.csv'.format(
+        ANALYSIS_DIR)
+    glm_pd = pd.read_csv(glm_csv_file_name)
+    R_glm = []
+    for T in np.sort(np.unique(glm_pd["T"])):
+        indices = np.where(glm_pd["T"]==T)[0]
+        # optimal embedding maximizes the estimated history dependence (on the full recording) set for given past range
+        opt_index = np.argmax(glm_pd["R_GLM"][indices])
+        R_glm += [glm_pd["R_GLM"][indices][opt_index]]
+    return np.sort(np.unique(glm_pd["T"])), np.array(R_glm)
+
 def get_CI_median(samples):
     N_samples = len(samples)
     median = np.median(samples)
@@ -63,6 +79,7 @@ def get_CI_mean(samples):
 
 def get_R_tot(T, R, R_CI_lo):
     R_max = np.amax(R)
+    R_CI_lo[np.isnan(R_CI_lo)] = R[np.isnan(R_CI_lo)]
     if len(np.nonzero(R-R_CI_lo)[0]) == 0:
         return None
     else:

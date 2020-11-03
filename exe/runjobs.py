@@ -10,19 +10,19 @@ codedirectory = '/home/lucas/research/projects/history_dependence/hdestimator/ex
 outputdirectory = '/data.nst/lucas/history_dependence/cluster_output/'
 
 device = 'cluster'
-recorded_system = 'Retina'
+recorded_system = 'EC'
 rec_length = '40min'
-setup = 'fivebins'
+setup = 'fivebins_timetest_shuffling'
 # 'full', 'full_withCV' (only Simulation), 'full_bbc' (test of the old BBC criterion), 'onebin' (only Experiments), 'fivebins' (max five bins, only Experiments)
 # recorded_system =  # 'V1' 142,  'Retina' 111, 'EC' 28, 'Culture' 48, 'Simulation' 10 (samples)
 
 
-queue_option = 'qsub -q rostam.q -t 1:111:1 -b y -j y -l h_vmem=6G -wd %s -o %s' % (
-   codedirectory, outputdirectory)
+queue_option = 'qsub -q rostam.q -t 1:28:1 -b y -j y -l h_vmem=6G -wd %s -o %s' % (
+    codedirectory, outputdirectory)
 program = '/home/lucas/anaconda2/envs/python3/bin/python'
 script = '%s/emb_opt_analysis.py' % (codedirectory)
 command = queue_option + ' ' + program + ' ' + \
-   script + ' ' + device + ' ' + recorded_system + ' ' + rec_length + ' ' + setup
+    script + ' ' + device + ' ' + recorded_system + ' ' + rec_length + ' ' + setup
 
 call(command, shell=True)
 

@@ -6,7 +6,8 @@ import csv
 import yaml
 import numpy as np
 
-ESTIMATOR_DIR = '{}/..'.format(dirname(realpath(__file__)))
+# ESTIMATOR_DIR = '{}/..'.format(dirname(realpath(__file__)))
+ESTIMATOR_DIR = '/home/lucas/research/projects/history_dependence/hdestimator/'
 path.insert(1, '{}/src'.format(ESTIMATOR_DIR))
 
 if 'hde_glm' not in sys.modules:
@@ -22,6 +23,10 @@ device = argv[1]
 recorded_system = argv[2]
 rec_length = argv[3]
 setup = argv[4]
+# device = 'Desktop'
+# recorded_system = 'Simulation'
+# rec_length = '90min'
+# setup = 'full'
 
 
 if device == 'cluster':
@@ -49,7 +54,7 @@ def main_Simulation():
                 "T", "number_of_bins_d", "scaling_kappa", "first_bin_size", "R_GLM_test", "R_GLM"])
             writer.writeheader()
     # Load the 900 minute simulated recording
-    dataDir = '/home/lucas/research/projects/history_dependence/hdestimator/simulation_data/'
+    dataDir = '{}/simulation_data/'.format(ESTIMATOR_DIR)
     analysisDataDir = '/data.nst/lucas/history_dependence/paper/simulation_data/analysis/'
     spiketimes = np.loadtxt('{}spiketimes_constI_5ms.dat'.format(dataDir))
     # Preprocess spiketimes and compute binary counts for current spiking
@@ -67,31 +72,30 @@ def main_Simulation():
     # Save results to glm_benchmarks.csv
     glm.save_glm_estimates_R_to_CSV_Simulation(
         past_range, glm_estimates, glm_estimates_test, glm_settings)
-
     return EXIT_SUCCESS
 
 
 # IDEA: Use essentially the benchmark code: fit GLM on one third of the data, but also return the BIC on the full data set. Alternatively, fit on the whole data set. Try 80 past bins for T_index = 35, with counts and with medians.
+
 def main_Simulation_BIC():
     # Get run index for computation on the cluster
     if device == 'cluster':
         past_range_index = (int(os.environ['SGE_TASK_ID']) - 1)
     else:
-        past_range_index = 0
+        past_range_index = 35
     # Load settings
     with open('{}/settings/Simulation_glm.yaml'.format(ESTIMATOR_DIR), 'r') as glm_settings_file:
         glm_settings = yaml.load(glm_settings_file, Loader=yaml.BaseLoader)
     if past_range_index == 0:
         analysis_dir = glm_settings['ANALYSIS_DIR']
-        glm_csv_file_name = '{}/glm_estimates_cross_validated_new.csv'.format(
+        glm_csv_file_name = '{}/glm_estimates_BIC.csv'.format(
             analysis_dir)
         with open(glm_csv_file_name, 'w', newline='') as glm_csv_file:
             writer = csv.DictWriter(glm_csv_file, fieldnames=[
-                "T", "number_of_bins_d", "scaling_kappa", "first_bin_size", "R_GLM_test", "R_GLM"])
+                "T", "number_of_bins_d", "scaling_kappa", "first_bin_size",  "embedding_mode_optimization", "BIC", "R_GLM"])
             writer.writeheader()
     # Load the 900 minute simulated recording
     dataDir = '/home/lucas/research/projects/history_dependence/hdestimator/simulation_data/'
-    analysisDataDir = '/data.nst/lucas/history_dependence/paper/simulation_data/analysis/'
     spiketimes = np.loadtxt('{}spiketimes_constI_5ms.dat'.format(dataDir))
     # Preprocess spiketimes and compute binary counts for current spiking
     spiketimes, counts = glm.preprocess_spiketimes(
@@ -102,12 +106,12 @@ def main_Simulation_BIC():
         glm_settings['embedding_past_range_set']).astype(float)
     past_range = embedding_past_range_set[past_range_index]
     # Compute optimized history dependence for given past range
-    glm_estimates, glm_estimates_test = glm.compute_estimates_R_cross_validation_new(
-        past_range, spiketimes, counts, glm_settings)
+
+    glm_estimates, BIC = glm.compute_estimates_R_BIC_Simulation(past_range, spiketimes, counts, glm_settings)
 
     # Save results to glm_benchmarks.csv
-    glm.save_glm_estimates_R_to_CSV_Simulation(
-        past_range, glm_estimates, glm_estimates_test, glm_settings)
+    glm.save_glm_estimates_R_BIC_to_CSV_Simulation(
+        past_range, glm_estimates, BIC, glm_settings)
 
     return EXIT_SUCCESS
 
@@ -151,7 +155,7 @@ def main_Experiments():
 
 if __name__ == "__main__":
     if recorded_system == 'Simulation':
-        exit(main_Simulation())
+        exit(main_Simulation_BIC())
     else:
         exit(main_Experiments())
 

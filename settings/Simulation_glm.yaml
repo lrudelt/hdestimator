@@ -1,7 +1,8 @@
 # paramters for the optimization of GLM parameters to compute RvsT ground truth
-embedding_number_of_bins_set : [80, 100] # possibly add 125, 150
+# embedding_number_of_bins_set : [80, 100] # possibly add 125, 150
+embedding_number_of_bins_set : [25,50,75,100,125,150] # possibly add 125, 150
 
-max_first_bin_size : 0.005
+max_first_bin_size : 0.0005
 
 embedding_step_size : 0.005
 
@@ -10,7 +11,7 @@ total_recording_length : 54000.
 # Compute binary past embedding with median method as in the original analysis
 embedding_mode_benchmark : 'medians'
 # For optimization work with spike counts as in the model
-embedding_mode_optimization : 'counts'
+embedding_mode_optimization : 'medians' #performed slightly better than 'counts'
 
 burning_in_time : 99.9999
 

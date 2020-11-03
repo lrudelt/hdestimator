@@ -1,6 +1,7 @@
 from sys import argv
 import os
 from subprocess import call
+import time
 
 """Run parameters"""
 device = argv[1]
@@ -31,12 +32,13 @@ script = '%s/estimate.py' % (codedirectory)
 
 
 """Compute estimates for different embeddings"""
-
-command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t hist -p -s ' + setting_file + \
-    ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
-
-call(command, shell=True)
-print("hist done")
+# time1 = time.clock_gettime(1)
+# command = program + ' ' + load_script + ' ' + str(run_index) + ' ' + rec_length + ' | ' + program + ' ' + script + ' /dev/stdin -t hist -p -s ' + setting_file + \
+#     ' --label "{}-{}-{}"'.format(rec_length, setup, str(run_index))
+#
+# call(command, shell=True)
+# time2 = time.clock_gettime(1)
+# print("hist done in", (time2-time1)/60., " minutes for {}".format(setup))
 
 """Compute essential confidence intervals"""
 
